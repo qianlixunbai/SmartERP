@@ -202,6 +202,8 @@ onMounted(async () => {
         type="textarea"
         :rows="3"
         placeholder="请输入审批意见（可选）"
+        maxlength="200"
+        show-word-limit
         class="mb-16"
       />
       <div class="action-row">
