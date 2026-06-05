@@ -1,11 +1,3 @@
-The complete bilingual markdown file has been written and verified at:
-
-**`D:\claude聊天\SmartOA技术文档_bilingual.md`** (1140 lines)
-
-Below is the complete translated content:
-
----
-
 # SmartOA シンプル承認フロー管理システム -- 完全技術文書
 
 > # SmartOA 简易审批流管理系统 — 完整技术文档

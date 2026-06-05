@@ -1,6 +1,3 @@
-Here is the complete bilingual (Japanese + Chinese) translated markdown:
-
-```markdown
 # システムアーキテクチャ設計書
 
 > # 系统架构设计文档
