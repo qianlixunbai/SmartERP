@@ -8,29 +8,29 @@ Below is the complete translated content:
 
 # SmartOA シンプル承認フロー管理システム -- 完全技術文書
 
-> <span style="color: #888888;"># SmartOA 简易审批流管理系统 — 完整技术文档</span>
+> # SmartOA 简易审批流管理系统 — 完整技术文档
 
 **バージョン：P2 完成版** | 日付：2026-05-27 | 技術スタック：Spring Boot 3.5.14 + Vue 3 + MySQL 8.0 + JWT + MyBatis-Plus
 
-> <span style="color: #888888;">**版本：P2 完成版** | 日期：2026-05-27 | 技术栈：Spring Boot 3.5.14 + Vue 3 + MySQL 8.0 + JWT + MyBatis-Plus</span>
+> **版本：P2 完成版** | 日期：2026-05-27 | 技术栈：Spring Boot 3.5.14 + Vue 3 + MySQL 8.0 + JWT + MyBatis-Plus
 
 ---
 
 ## 一、データベース設計
 
-> <span style="color: #888888;">## 一、数据库设计</span>
+> ## 一、数据库设计
 
 システムは全 8 テーブル、MySQL 8.0、文字セット utf8mb4、ストレージエンジン InnoDB。
 
-> <span style="color: #888888;">系统共 8 张表，MySQL 8.0，字符集 utf8mb4，存储引擎 InnoDB。</span>
+> 系统共 8 张表，MySQL 8.0，字符集 utf8mb4，存储引擎 InnoDB。
 
 ### 1.1 ユーザーテーブル（sys_user）
 
-> <span style="color: #888888;">### 1.1 用户表（sys_user）</span>
+> ### 1.1 用户表（sys_user）
 
 ユーザー情報を保存し、組織階層関係（直属上司 + 部門ディレクター）を含む。
 
-> <span style="color: #888888;">存储用户信息，含组织层级关系（直属领导 + 部门总监）。</span>
+> 存储用户信息，含组织层级关系（直属领导 + 部门总监）。
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
@@ -45,7 +45,7 @@ Below is the complete translated content:
 
 **シードデータ**（全ユーザーパスワード：123456、BCrypt 暗号化）：
 
-> <span style="color: #888888;">**种子数据**（所有用户密码：123456，BCrypt 加密）：</span>
+> **种子数据**（所有用户密码：123456，BCrypt 加密）：
 
 | ID | 用户名 | 姓名 | 角色 | 部门 | 直属领导 | 部门总监 |
 |----|--------|------|------|------|----------|----------|
@@ -57,7 +57,7 @@ Below is the complete translated content:
 
 ### 1.2 承認テンプレートテーブル（approval_template）
 
-> <span style="color: #888888;">### 1.2 审批模板表（approval_template）</span>
+> ### 1.2 审批模板表（approval_template）
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
@@ -70,11 +70,11 @@ Below is the complete translated content:
 
 ### 1.3 承認ノードテーブル（approval_node）⭐ コア
 
-> <span style="color: #888888;">### 1.3 审批节点表（approval_node）⭐ 核心</span>
+> ### 1.3 审批节点表（approval_node）⭐ 核心
 
 テンプレート配下の承認ステップで、`approval_template` から外部キー `template_id` で 1:N 関連付け。条件分岐、並行承認、タイムアウト設定をサポート。
 
-> <span style="color: #888888;">模板下挂的审批步骤，由 `approval_template` 通过外键 `template_id` 1:N 关联。支持条件分支、并行审批、超时配置。</span>
+> 模板下挂的审批步骤，由 `approval_template` 通过外键 `template_id` 1:N 关联。支持条件分支、并行审批、超时配置。
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
@@ -95,19 +95,19 @@ Below is the complete translated content:
 
 **条件式変数**：`leaveType`（休暇種類 String）、`days`（休暇日数 long）、`startDate`、`endDate`（LocalDate）
 
-> <span style="color: #888888;">**条件表达式变量**：`leaveType`（请假类型 String）、`days`（请假天数 long）、`startDate`、`endDate`（LocalDate）</span>
+> **条件表达式变量**：`leaveType`（请假类型 String）、`days`（请假天数 long）、`startDate`、`endDate`（LocalDate）
 
 例：`days > 3` → 3 日超の休暇はこのノードを通る；`leaveType == '病假'` → 病欠はこのノードを通る。
 
-> <span style="color: #888888;">示例：`days > 3` → 超过 3 天的请假走此节点；`leaveType == '病假'` → 病假走此节点。</span>
+> 示例：`days > 3` → 超过 3 天的请假走此节点；`leaveType == '病假'` → 病假走此节点。
 
 ### 1.4 休暇申請テーブル（leave_request）
 
-> <span style="color: #888888;">### 1.4 请假申请表（leave_request）</span>
+> ### 1.4 请假申请表（leave_request）
 
 コアテーブル。`current_node_id` + `current_approver_id` + `timeout_time` が承認フロー全体を駆動する。
 
-> <span style="color: #888888;">核心表。`current_node_id` + `current_approver_id` + `timeout_time` 驱动整个审批流转。</span>
+> 核心表。`current_node_id` + `current_approver_id` + `timeout_time` 驱动整个审批流转。
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
@@ -128,7 +128,7 @@ Below is the complete translated content:
 
 ### 1.5 承認記録テーブル（approval_record）
 
-> <span style="color: #888888;">### 1.5 审批记录表（approval_record）</span>
+> ### 1.5 审批记录表（approval_record）
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
@@ -143,7 +143,7 @@ Below is the complete translated content:
 
 ### 1.6 テンプレートフィールドテーブル（template_field）
 
-> <span style="color: #888888;">### 1.6 模板字段表（template_field）</span>
+> ### 1.6 模板字段表（template_field）
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
@@ -158,11 +158,11 @@ Below is the complete translated content:
 
 ### 1.7 並行承認タスクテーブル（approval_task）⭐ P2 新規
 
-> <span style="color: #888888;">### 1.7 并行审批任务表（approval_task）⭐ P2 新增</span>
+> ### 1.7 并行审批任务表（approval_task）⭐ P2 新增
 
 並行承認（会签/或签）モードにおいて、各承認者の承認状態を追跡する。
 
-> <span style="color: #888888;">并行审批（会签/或签）模式下，跟踪每个审批人的审批状态。</span>
+> 并行审批（会签/或签）模式下，跟踪每个审批人的审批状态。
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
@@ -176,41 +176,41 @@ Below is the complete translated content:
 
 制約：`UNIQUE (leave_request_id, node_id, approver_id)`
 
-> <span style="color: #888888;">约束：`UNIQUE (leave_request_id, node_id, approver_id)`</span>
+> 约束：`UNIQUE (leave_request_id, node_id, approver_id)`
 
 ---
 
 ## 二、バックエンドコアロジック
 
-> <span style="color: #888888;">## 二、后端核心逻辑</span>
+> ## 二、后端核心逻辑
 
 ### 2.1 JWT + BCrypt 認証フロー
 
-> <span style="color: #888888;">### 2.1 JWT + BCrypt 认证流程</span>
+> ### 2.1 JWT + BCrypt 认证流程
 
 関連ファイル：`JwtProperties.java`、`JwtUtil.java`、`UserContextHolder.java`、`JwtFilter.java`、`WebConfig.java`
 
-> <span style="color: #888888;">涉及文件：`JwtProperties.java`、`JwtUtil.java`、`UserContextHolder.java`、`JwtFilter.java`、`WebConfig.java`</span>
+> 涉及文件：`JwtProperties.java`、`JwtUtil.java`、`UserContextHolder.java`、`JwtFilter.java`、`WebConfig.java`
 
 **ログインフロー：**
 
-> <span style="color: #888888;">**登录流程：**</span>
+> **登录流程：**
 
 1. ユーザーが `POST /api/login` でユーザー名とパスワードを送信
 2. `UserService.login()` が `sys_user` テーブルを検索し、`BCryptPasswordEncoder.matches()` でパスワードを照合
 3. `JwtUtil.generateToken()` が JWT を生成（sub=ユーザーID、claims に username+role を含む、24h 有効期限）
 4. `Result<Map>` を返却：`{code:200, data:{token, user:{id, username, realName, role, department, directLeaderId, departmentHeadId}}}`
 
-> <span style="color: #888888;">
+> 
 > 1. 用户 `POST /api/login` 提交用户名密码
 > 2. `UserService.login()` 查 `sys_user` 表，使用 `BCryptPasswordEncoder.matches()` 比对密码
 > 3. `JwtUtil.generateToken()` 生成 JWT（sub=用户ID，claims 含 username+role，24h 过期）
 > 4. 返回 `Result<Map>`：`{code:200, data:{token, user:{id, username, realName, role, department, directLeaderId, departmentHeadId}}}`
-> </span>
+> 
 
 **リクエスト認証フロー：**
 
-> <span style="color: #888888;">**请求认证流程：**</span>
+> **请求认证流程：**
 
 1. 各 `/api/*` リクエストは `JwtFilter.doFilterInternal()` を通過
 2. `Authorization: Bearer xxx` ヘッダーからトークンを抽出
@@ -219,38 +219,38 @@ Below is the complete translated content:
 5. Controller は `UserService.getLoginUser()` で現在のユーザーを取得
 6. リクエスト終了後、`finally` ブロックで ThreadLocal をクリアし、メモリリークを防止
 
-> <span style="color: #888888;">
+> 
 > 1. 每个 `/api/*` 请求经过 `JwtFilter.doFilterInternal()`
 > 2. 从 `Authorization: Bearer xxx` 头部提取 token
 > 3. jjwt 库验证签名 + 过期时间
 > 4. 解析出 userId → 存入 `UserContextHolder`（ThreadLocal）
 > 5. Controller 通过 `UserService.getLoginUser()` 获取当前用户
 > 6. 请求结束后 `finally` 块清空 ThreadLocal，防止内存泄漏
-> </span>
+> 
 
 ### 2.2 承認フローエンジン（LeaveService.java）⭐ コア
 
-> <span style="color: #888888;">### 2.2 审批流转引擎（LeaveService.java）⭐ 核心</span>
+> ### 2.2 审批流转引擎（LeaveService.java）⭐ 核心
 
 #### 休暇申請送信（submitLeave）
 
-> <span style="color: #888888;">#### 提交请假（submitLeave）</span>
+> #### 提交请假（submitLeave）
 
 1. 申請者エンティティを取得（directLeaderId、departmentHeadId を含む）
 2. LeaveRequest を作成：status=PENDING、approvalStep=0
 3. `advanceToNextNode()` を呼び出して最初の条件を満たす承認ノードに進む
 4. データベースに保存し、フロントエンドに返却
 
-> <span style="color: #888888;">
+> 
 > 1. 获取申请人实体（含 directLeaderId、departmentHeadId）
 > 2. 创建 LeaveRequest：status=PENDING, approvalStep=0
 > 3. 调用 `advanceToNextNode()` 推进到第一个满足条件的审批节点
 > 4. 入库，返回给前端
-> </span>
+> 
 
 #### 承認操作（approveLeave）
 
-> <span style="color: #888888;">#### 审批操作（approveLeave）</span>
+> #### 审批操作（approveLeave）
 
 ```
 検証フェーズ：
@@ -300,7 +300,7 @@ Below is the complete translated content:
 4. ノードがなくなった → false を返す（フロー完了）
 ```
 
-> <span style="color: #888888;">
+> 
 > ```
 > 校验阶段：
 > 1. 请假单存在？
@@ -348,11 +348,11 @@ Below is the complete translated content:
 >    e. 返回 true
 > 4. 无更多节点 → 返回 false（流程完成）
 > ```
-> </span>
+> 
 
 #### その他の操作
 
-> <span style="color: #888888;">#### 其他操作</span>
+> #### 其他操作
 
 | 操作 | 方法 | 説明 |
 |------|------|------|
@@ -361,18 +361,18 @@ Below is the complete translated content:
 | 滞留修復 | `repairStuckRequests()` | currentApproverId が null で PENDING タスクがない滞留申請を修復 |
 | タイムアウトチェック | `checkTimeouts()` | timeout_time が期限切れの申請を検索し、タイムアウト処理を実行 |
 
-> <span style="color: #888888;">
+> 
 > | 操作 | 方法 | 说明 |
 > |------|------|------|
 > | 撤回 | `withdrawLeave()` | 只能撤回自己 PENDING 的申请，跳过当前节点 PENDING 任务 |
 > | 转派 | `transferLeave()` | 单人节点转派给其他用户（并行节点禁止转派） |
 > | 滞留修复 | `repairStuckRequests()` | 修复 currentApproverId 为 null 且无 PENDING 任务的滞留申请 |
 > | 超时检查 | `checkTimeouts()` | 查询 timeout_time 过期的申请，执行超时动作 |
-> </span>
+> 
 
 #### タイムアウト動作
 
-> <span style="color: #888888;">#### 超时动作</span>
+> #### 超时动作
 
 | 動作 | 説明 |
 |------|------|
@@ -380,17 +380,17 @@ Below is the complete translated content:
 | AUTO_APPROVE | 現在のノードのすべての保留中タスクをスキップし、自動承認で次のノードへ |
 | AUTO_REJECT | 申請を却下し、フローを終了 |
 
-> <span style="color: #888888;">
+> 
 > | 动作 | 说明 |
 > |------|------|
 > | ESCALATE | 转派给指定人（有 escalate_to_user_id）或跳过进入下一节点 |
 > | AUTO_APPROVE | 跳过当前节点所有待审批任务，自动通过进入下一节点 |
 > | AUTO_REJECT | 驳回申请，终止流程 |
-> </span>
+> 
 
 ### 2.3 スケジュールタスク（TimeoutScheduler.java）
 
-> <span style="color: #888888;">### 2.3 定时任务（TimeoutScheduler.java）</span>
+> ### 2.3 定时任务（TimeoutScheduler.java）
 
 ```java
 @Scheduled(fixedRate = 300000) // 每 5 分钟
@@ -402,7 +402,7 @@ public void checkTimeouts() {
 
 ### 2.4 承認テンプレート管理（TemplateService.java）
 
-> <span style="color: #888888;">### 2.4 审批模板管理（TemplateService.java）</span>
+> ### 2.4 审批模板管理（TemplateService.java）
 
 - `listAll()` → 全テンプレートを検索
 - `getById(id)` → 単一テンプレートを検索、存在しなければ BusinessException をスロー
@@ -413,7 +413,7 @@ public void checkTimeouts() {
 - `saveNodes(templateId, nodes)` → ノードを全量置換（旧ノードを削除、参照をクリーンアップし、新ノードを挿入）
 - `listFields(templateId)` → テンプレートのカスタムフィールドを検索
 
-> <span style="color: #888888;">
+> 
 > - `listAll()` → 查询所有模板
 > - `getById(id)` → 查询单个模板，不存在抛 BusinessException
 > - `create(template)` → 创建模板
@@ -422,11 +422,11 @@ public void checkTimeouts() {
 > - `listNodes(templateId)` → 查询模板的审批节点（按 sortOrder 排序）
 > - `saveNodes(templateId, nodes)` → 全量替换节点（先删旧节点，清理引用，再插新节点）
 > - `listFields(templateId)` → 查询模板的自定义字段
-> </span>
+> 
 
 ### 2.5 権限制御
 
-> <span style="color: #888888;">### 2.5 权限控制</span>
+> ### 2.5 权限控制
 
 | モジュール | 権限方式 | 説明 |
 |------|----------|------|
@@ -435,18 +435,18 @@ public void checkTimeouts() {
 | フロントエンドルート | `router.beforeEach` ロールガード | MANAGER 以外が /templates にアクセスするとホームにリダイレクト |
 | CORS | WebConfig で localhost:5173 を許可 | 開発環境のクロスオリジン対応 |
 
-> <span style="color: #888888;">
+> 
 > | 模块 | 权限方式 | 说明 |
 > |------|----------|------|
 > | 模板管理 | Controller 层 `role == "MANAGER"` | 非 MANAGER 返回 403 |
 > | 审批操作 | Service 层 `currentApproverId` / `approval_task` | 任何人被指定为审批人即可批 |
 > | 前端路由 | `router.beforeEach` 角色守卫 | 非 MANAGER 访问 /templates 跳转主页 |
 > | CORS | WebConfig 允许 localhost:5173 | 开发环境跨域支持 |
-> </span>
+> 
 
 ### 2.6 統一レスポンス形式
 
-> <span style="color: #888888;">### 2.6 统一响应格式</span>
+> ### 2.6 统一响应格式
 
 ```json
 // 成功
@@ -464,11 +464,11 @@ public void checkTimeouts() {
 
 `BusinessException` + `@RestControllerAdvice`（GlobalExceptionHandler）によるグローバル統一例外処理。
 
-> <span style="color: #888888;">`BusinessException` + `@RestControllerAdvice`（GlobalExceptionHandler）全局统一异常处理。</span>
+> `BusinessException` + `@RestControllerAdvice`（GlobalExceptionHandler）全局统一异常处理。
 
 ### 2.7 API 一覧（全 20+ エンドポイント）
 
-> <span style="color: #888888;">### 2.7 接口清单（共 20+ 个）</span>
+> ### 2.7 接口清单（共 20+ 个）
 
 | 序号 | 路径 | 方法 | 认证 | 説明 |
 |------|------|------|------|------|
@@ -498,7 +498,7 @@ public void checkTimeouts() {
 | 24 | `/api/stats/summary` | GET | 是 | 統計サマリー |
 | 25 | `/api/stats/export` | GET | 是 | Excel エクスポート |
 
-> <span style="color: #888888;">
+> 
 > | 序号 | 路径 | 方法 | 认证 | 说明 |
 > |------|------|------|------|------|
 > | 1 | `/api/login` | POST | 否 | 登录 |
@@ -526,45 +526,45 @@ public void checkTimeouts() {
 > | 23 | `/api/templates/{id}/fields` | GET | 是 | 获取模板字段 |
 > | 24 | `/api/stats/summary` | GET | 是 | 统计摘要 |
 > | 25 | `/api/stats/export` | GET | 是 | Excel 导出 |
-> </span>
+> 
 
 ---
 
 ## 三、フロントエンドアーキテクチャ
 
-> <span style="color: #888888;">## 三、前端架构</span>
+> ## 三、前端架构
 
 ### 3.1 技術スタック
 
-> <span style="color: #888888;">### 3.1 技术栈</span>
+> ### 3.1 技术栈
 
 Vue 3.5（Composition API）+ Element Plus 2.13.7 + Vite 8 + Pinia + Vue Router 5 + Axios + ECharts 5
 
-> <span style="color: #888888;">Vue 3.5（Composition API）+ Element Plus 2.13.7 + Vite 8 + Pinia + Vue Router 5 + Axios + ECharts 5</span>
+> Vue 3.5（Composition API）+ Element Plus 2.13.7 + Vite 8 + Pinia + Vue Router 5 + Axios + ECharts 5
 
 エントリーファイル `main.js`：Vue アプリ作成 → Element Plus Icons 登録 → Pinia/Router/ElementPlus インストール → `#app` にマウント
 
-> <span style="color: #888888;">入口文件 `main.js`：创建 Vue 应用 → 注册 Element Plus Icons → 安装 Pinia/Router/ElementPlus → 挂载 `#app`</span>
+> 入口文件 `main.js`：创建 Vue 应用 → 注册 Element Plus Icons → 安装 Pinia/Router/ElementPlus → 挂载 `#app`
 
 ### 3.2 レイアウトシステム
 
-> <span style="color: #888888;">### 3.2 布局系统</span>
+> ### 3.2 布局系统
 
 | レイアウト | ファイル | 使用シーン | 構造 |
 |------|------|----------|------|
 | AuthLayout | `layouts/AuthLayout.vue` | /login | 全画面中央寄せ、紫色グラデーション背景 |
 | MainLayout | `layouts/MainLayout.vue` | ログイン以外の全ページ | 左 220px サイドバー + 上 60px ナビ + 中央グレー背景コンテンツエリア |
 
-> <span style="color: #888888;">
+> 
 > | 布局 | 文件 | 使用场景 | 结构 |
 > |------|------|----------|------|
 > | AuthLayout | `layouts/AuthLayout.vue` | /login | 全屏居中，紫色渐变背景 |
 > | MainLayout | `layouts/MainLayout.vue` | 除登录外所有页面 | 左 220px 侧边栏 + 上 60px 导航 + 中间灰底内容区 |
-> </span>
+> 
 
 ### 3.3 ルート設定
 
-> <span style="color: #888888;">### 3.3 路由配置</span>
+> ### 3.3 路由配置
 
 | パス | ページ | 認証 | ロール |
 |------|------|------|------|
@@ -578,7 +578,7 @@ Vue 3.5（Composition API）+ Element Plus 2.13.7 + Vite 8 + Pinia + Vue Router 
 | `/` | リダイレクト | → /submit-application | — |
 | `/:pathMatch(.*)*` | NotFoundPage.vue | — | 404 |
 
-> <span style="color: #888888;">
+> 
 > | 路径 | 页面 | 认证 | 角色 |
 > |------|------|------|------|
 > | `/login` | LoginPage.vue | 游客 | — |
@@ -590,45 +590,45 @@ Vue 3.5（Composition API）+ Element Plus 2.13.7 + Vite 8 + Pinia + Vue Router 
 > | `/stats` | StatsPage.vue | 必须 | — |
 > | `/` | 重定向 | → /submit-application | — |
 > | `/:pathMatch(.*)*` | NotFoundPage.vue | — | 404 |
-> </span>
+> 
 
 **ルートガード（beforeEach）：**
 
-> <span style="color: #888888;">**路由守卫（beforeEach）：**</span>
+> **路由守卫（beforeEach）：**
 
 1. トークンありだがユーザーなし → 自動で `fetchUser()` を呼び出してログイン状態を復元
 2. 認証必要だが未ログイン → `/login` にリダイレクト
 3. ログイン済みで `/login` にアクセス → `/submit-application` にリダイレクト
 4. ロール不一致 → `/submit-application` にリダイレクト
 
-> <span style="color: #888888;">
+> 
 > 1. 有 token 但无 user → 自动调 `fetchUser()` 恢复登录态
 > 2. 需要认证但未登录 → 跳转 `/login`
 > 3. 已登录访问 `/login` → 跳转 `/submit-application`
 > 4. 角色不匹配 → 跳转 `/submit-application`
-> </span>
+> 
 
 ### 3.4 Axios ラッパー（api/index.js）
 
-> <span style="color: #888888;">### 3.4 Axios 封装（api/index.js）</span>
+> ### 3.4 Axios 封装（api/index.js）
 
 - baseURL = `/api`（Vite 開発サーバーが localhost:8080 にプロキシ）
 - リクエストインターセプター：自動で `Authorization: Bearer <token>` を付加
 - レスポンスインターセプター：`code === 200` → `data` を直接返却；`code === 401` → トークンクリア + ログイン画面にリダイレクト；その他 → `ElMessage.error`
 
-> <span style="color: #888888;">
+> 
 > - baseURL = `/api`（Vite 开发服务器代理到 localhost:8080）
 > - 请求拦截器：自动附加 `Authorization: Bearer <token>`
 > - 响应拦截器：`code === 200` → 直接返回 `data`；`code === 401` → 清空 token + 跳转登录；其他 → `ElMessage.error`
-> </span>
+> 
 
 ### 3.5 状態管理（Pinia）
 
-> <span style="color: #888888;">### 3.5 状态管理（Pinia）</span>
+> ### 3.5 状态管理（Pinia）
 
 **auth store：**
 
-> <span style="color: #888888;">**auth store：**</span>
+> **auth store：**
 
 | 状態/メソッド | 説明 |
 |-----------|------|
@@ -639,7 +639,7 @@ Vue 3.5（Composition API）+ Element Plus 2.13.7 + Vite 8 + Pinia + Vue Router 
 | fetchUser() | GET /api/users/current で現在のユーザーをリフレッシュ |
 | logout() | 全状態をクリア → ログイン画面に遷移 |
 
-> <span style="color: #888888;">
+> 
 > | 状态/方法 | 说明 |
 > |-----------|------|
 > | token | JWT 令牌，持久化到 localStorage |
@@ -648,11 +648,11 @@ Vue 3.5（Composition API）+ Element Plus 2.13.7 + Vite 8 + Pinia + Vue Router 
 > | login() | 调登录接口 → 存 token+user → 跳转主页 |
 > | fetchUser() | GET /api/users/current 刷新当前用户 |
 > | logout() | 清空所有状态 → 跳转登录页 |
-> </span>
+> 
 
 **approval store：**
 
-> <span style="color: #888888;">**approval store：**</span>
+> **approval store：**
 
 | 状態/メソッド | 説明 |
 |-----------|------|
@@ -664,7 +664,7 @@ Vue 3.5（Composition API）+ Element Plus 2.13.7 + Vite 8 + Pinia + Vue Router 
 | fetchRecords(id) | GET /api/leave/{id}/records |
 | fetchTasks(id) | GET /api/leave/{id}/tasks |
 
-> <span style="color: #888888;">
+> 
 > | 状态/方法 | 说明 |
 > |-----------|------|
 > | pendingRequests / doneRequests / myRequests | 三种审批列表 |
@@ -674,11 +674,11 @@ Vue 3.5（Composition API）+ Element Plus 2.13.7 + Vite 8 + Pinia + Vue Router 
 > | fetchDetail(id) | GET /api/leave/{id} |
 > | fetchRecords(id) | GET /api/leave/{id}/records |
 > | fetchTasks(id) | GET /api/leave/{id}/tasks |
-> </span>
+> 
 
 ### 3.6 ページコンポーネント詳細
 
-> <span style="color: #888888;">### 3.6 页面组件详解</span>
+> ### 3.6 页面组件详解
 
 **1. ログインページ（LoginPage.vue）**
 - 紫色グラデーション全画面背景、白い中央 400px カード
@@ -686,13 +686,13 @@ Vue 3.5（Composition API）+ Element Plus 2.13.7 + Vite 8 + Pinia + Vue Router 
 - Enter キーによるクイックログイン対応
 - 下部にテストアカウントのヒント表示
 
-> <span style="color: #888888;">
+> 
 > **① 登录页（LoginPage.vue）**
 > - 紫色渐变全屏背景，白色居中 400px 卡片
 > - 用户名 + 密码输入框（带图标）
 > - 支持回车键快速登录
 > - 底部提示测试账号
-> </span>
+> 
 
 **2. 申請送信（SubmitApplicationPage.vue）**
 - 2 カラムレイアウト：左側フォーム + 右側自分の休暇記録
@@ -700,23 +700,23 @@ Vue 3.5（Composition API）+ Element Plus 2.13.7 + Vite 8 + Pinia + Vue Router 
 - フロントエンド検証：終了日 >= 開始日、必須項目の非空チェック
 - 送信成功：通知 + フォームクリア + リスト更新
 
-> <span style="color: #888888;">
+> 
 > **② 提交申请（SubmitApplicationPage.vue）**
 > - 双栏布局：左侧表单 + 右侧我的请假记录
 > - 请假类型下拉（6 种）+ 日期选择器 + 原因文本域
 > - 前端校验：结束日期 >= 开始日期，必填项非空
 > - 提交成功：提示 + 清空表单 + 刷新列表
-> </span>
+> 
 
 **3. 自分の承認（MyApprovalsPage.vue）**
 - 3 タブ構成：承認待ち / 処理済み / 自分の申請
 - テーブル列：ID、申請者、休暇種類、日付、状態、操作
 
-> <span style="color: #888888;">
+> 
 > **③ 我的审批（MyApprovalsPage.vue）**
 > - 三 Tab 架构：待审批 / 已处理 / 我的申请
 > - 表格列：ID、申请人、请假类型、日期、状态、操作
-> </span>
+> 
 
 **4. 承認詳細（ApprovalDetailPage.vue）⭐ コアページ**
 - 上部 `el-steps` ステップバー（動的ノード + 完了ステップ）
@@ -730,7 +730,7 @@ Vue 3.5（Composition API）+ Element Plus 2.13.7 + Vite 8 + Pinia + Vue Router 
 - 撤回ボタン（申請者のみ表示）
 - 承認記録タイムライン
 
-> <span style="color: #888888;">
+> 
 > **④ 审批详情（ApprovalDetailPage.vue）⭐ 核心页面**
 > - 顶部 `el-steps` 步骤条（动态节点 + 完成步骤）
 > - 并行审批：显示当前节点所有待审批人标签
@@ -742,17 +742,17 @@ Vue 3.5（Composition API）+ Element Plus 2.13.7 + Vite 8 + Pinia + Vue Router 
 > - 转派按钮 + 弹窗（仅 SINGLE 模式可用）
 > - 撤回按钮（仅申请人可见）
 > - 审批记录时间线
-> </span>
+> 
 
 **5. テンプレート一覧（TemplateListPage.vue）**
 - テーブルでテンプレート一覧を表示
 - 新規作成/編集/削除操作（MANAGER のみ）
 
-> <span style="color: #888888;">
+> 
 > **⑤ 模板列表（TemplateListPage.vue）**
 > - 表格展示模板列表
 > - 新建/编辑/删除操作（MANAGER only）
-> </span>
+> 
 
 **6. テンプレート編集（TemplateEditPage.vue）⭐ P2 強化**
 - ルートパラメータ `:id?` はオプション
@@ -765,7 +765,7 @@ Vue 3.5（Composition API）+ Element Plus 2.13.7 + Vite 8 + Pinia + Vue Router 
   - 削除ボタン（ホバー時表示）
   - ノード間接続線
 
-> <span style="color: #888888;">
+> 
 > **⑥ 模板编辑（TemplateEditPage.vue）⭐ P2 增强**
 > - 路由参数 `:id?` 可选
 > - 基本信息表单：模板名称 + 描述 + 启用开关
@@ -776,19 +776,19 @@ Vue 3.5（Composition API）+ Element Plus 2.13.7 + Vite 8 + Pinia + Vue Router 
 >   - 超时设置：可折叠展开，配超时小时数 + 超时动作（转派/自动通过/自动驳回）+ 目标用户
 >   - 删除按钮（hover 显示）
 >   - 节点间连接线
-> </span>
+> 
 
 **7. 統計ページ（StatsPage.vue）**
 - ECharts グラフ：テンプレート平均承認時間 + 各テンプレート使用量
 
-> <span style="color: #888888;">
+> 
 > **⑦ 统计页（StatsPage.vue）**
 > - ECharts 图表：模板平均审批时长 + 各模板使用量
-> </span>
+> 
 
 ### 3.7 共有コンポーネント
 
-> <span style="color: #888888;">### 3.7 共享组件</span>
+> ### 3.7 共享组件
 
 | コンポーネント | ファイル | 機能 |
 |------|------|------|
@@ -797,28 +797,28 @@ Vue 3.5（Composition API）+ Element Plus 2.13.7 + Vite 8 + Pinia + Vue Router 
 | ApprovalTimeline | `ApprovalTimeline.vue` | 承認タイムライン |
 | StatusTag | `StatusTag.vue` | 状態タグ（PENDING=オレンジ/APPROVED=緑/REJECTED=赤/WITHDRAWN=グレー） |
 
-> <span style="color: #888888;">
+> 
 > | 组件 | 文件 | 功能 |
 > |------|------|------|
 > | LeaveTable | `LeaveTable.vue` | 通用审批表格 |
 > | LeaveForm | `LeaveForm.vue` | 请假表单封装 |
 > | ApprovalTimeline | `ApprovalTimeline.vue` | 审批时间线 |
 > | StatusTag | `StatusTag.vue` | 状态标签（PENDING=橙色/APPROVED=绿色/REJECTED=红色/WITHDRAWN=灰色） |
-> </span>
+> 
 
 ---
 
 ## 四、コアフローウォークスルー
 
-> <span style="color: #888888;">## 四、核心流程走查</span>
+> ## 四、核心流程走查
 
 ### 4.1 単人承認フロー（SINGLE）
 
-> <span style="color: #888888;">### 4.1 单人审批流程（SINGLE）</span>
+> ### 4.1 单人审批流程（SINGLE）
 
 「張三が 1 日の年次休暇を申請」を例に：
 
-> <span style="color: #888888;">以"张三请 1 天年假"为例：</span>
+> 以"张三请 1 天年假"为例：
 
 | ステップ | API | データ処理 |
 |------|------|----------|
@@ -828,7 +828,7 @@ Vue 3.5（Composition API）+ Element Plus 2.13.7 + Vite 8 + Pinia + Vue Router 
 | 4. 王经理が承認 | POST /api/leave/approve | requestId=1, action=APPROVE → 次のノードに進む |
 | 5. 3〜4 を繰り返し | — | ノードがまだあれば続行、なければ APPROVED |
 
-> <span style="color: #888888;">
+> 
 > | 步骤 | 接口 | 数据处理 |
 > |------|------|----------|
 > | ① 张三登录 | POST /api/login | 获取 JWT；directLeaderId=1(王经理) |
@@ -836,29 +836,29 @@ Vue 3.5（Composition API）+ Element Plus 2.13.7 + Vite 8 + Pinia + Vue Router 
 > | ③ 王经理查看待办 | GET /api/leave/pending | WHERE current_approver_id=1 AND status="PENDING" |
 > | ④ 王经理审批通过 | POST /api/leave/approve | requestId=1, action=APPROVE → 推进到下一节点 |
 > | ⑤ 重复③④ | — | 如还有节点继续流转，否则 APPROVED |
-> </span>
+> 
 
 フロー図：
 
-> <span style="color: #888888;">流转示意：</span>
+> 流转示意：
 
 ```
 張三が申請 → 直属上司（王经理）→ 条件判定 → 部門ディレクター（条件を満たせば）→ 完了 ✓
 ```
 
-> <span style="color: #888888;">
+> 
 > ```
 > 张三提交 → 直属领导（王经理）→ 条件判断 → 部门总监（如满足条件）→ 完成 ✓
 > ```
-> </span>
+> 
 
 ### 4.2 会签フロー（COUNTER_SIGN）
 
-> <span style="color: #888888;">### 4.2 会签流程（COUNTER_SIGN）</span>
+> ### 4.2 会签流程（COUNTER_SIGN）
 
 「張三が 5 日の年次休暇を申請し、2 名のディレクターの会签が必要」を例に：
 
-> <span style="color: #888888;">以"张三请 5 天年假，需 2 位总监会签"为例：</span>
+> 以"张三请 5 天年假，需 2 位总监会签"为例：
 
 | ステップ | 説明 |
 |------|------|
@@ -866,37 +866,37 @@ Vue 3.5（Composition API）+ Element Plus 2.13.7 + Vite 8 + Pinia + Vue Router 
 | 2. 张总监が承認 | 自分の task を完了、pendingCount>0 を確認 → 待機 |
 | 3. 李总监が承認 | 自分の task を完了、pendingCount=0 → 次のノードに進む |
 
-> <span style="color: #888888;">
+> 
 > | 步骤 | 说明 |
 > |------|------|
 > | ① 提交 | 进入会签节点，插入 2 条 approval_task（张总监、李总监），currentApproverId=null |
 > | ② 张总监审批通过 | 完成自己的 task，检查 pendingCount>0 → 等待 |
 > | ③ 李总监审批通过 | 完成自己的 task，pendingCount=0 → 推进到下一节点 |
-> </span>
+> 
 
 ### 4.3 或签フロー（OR_SIGN）
 
-> <span style="color: #888888;">### 4.3 或签流程（OR_SIGN）</span>
+> ### 4.3 或签流程（OR_SIGN）
 
 誰か 1 人が通過すれば次に進む：
 
-> <span style="color: #888888;">任何一人通过即推进：</span>
+> 任何一人通过即推进：
 
 | ステップ | 説明 |
 |------|------|
 | 1. 送信 | 或签ノードに入り、N 件の approval_task を挿入 |
 | 2. 任意の 1 人が承認 | 自分の task を完了、残りの task → SKIPPED、即座に次のノードへ |
 
-> <span style="color: #888888;">
+> 
 > | 步骤 | 说明 |
 > |------|------|
 > | ① 提交 | 进入或签节点，插入 N 条 approval_task |
 > | ② 任一人审批通过 | 完成自己的 task，其余 task → SKIPPED，立即推进 |
-> </span>
+> 
 
 ### 4.4 タイムアウト自動エスカレーション
 
-> <span style="color: #888888;">### 4.4 超时自动升级</span>
+> ### 4.4 超时自动升级
 
 1. ノード設定 `timeout_hours=24`、ノード進入時に `timeout_time = now + 24h` を設定
 2. `TimeoutScheduler` が 5 分ごとにスキャン：`WHERE status='PENDING' AND timeout_time <= now`
@@ -906,7 +906,7 @@ Vue 3.5（Composition API）+ Element Plus 2.13.7 + Vite 8 + Pinia + Vue Router 
    - AUTO_REJECT → 自動却下
 4. `TIMEOUT_*` 承認ログを記録
 
-> <span style="color: #888888;">
+> 
 > 1. 节点配置 `timeout_hours=24`，进入节点时设置 `timeout_time = now + 24h`
 > 2. `TimeoutScheduler` 每 5 分钟扫描：`WHERE status='PENDING' AND timeout_time <= now`
 > 3. 执行配置的 timeout_action：
@@ -914,17 +914,17 @@ Vue 3.5（Composition API）+ Element Plus 2.13.7 + Vite 8 + Pinia + Vue Router 
 >    - AUTO_APPROVE → 自动通过
 >    - AUTO_REJECT → 自动驳回
 > 4. 记录 `TIMEOUT_*` 审批日志
-> </span>
+> 
 
 ---
 
 ## 五、設定説明
 
-> <span style="color: #888888;">## 五、配置说明</span>
+> ## 五、配置说明
 
 `application.properties` 主要設定：
 
-> <span style="color: #888888;">`application.properties` 关键配置：</span>
+> `application.properties` 关键配置：
 
 ```properties
 # ========== データソース（MySQL） ==========
@@ -943,7 +943,7 @@ jwt.expiration=86400000    ← 24 時間有効期限（ミリ秒）
 http://localhost:5173 のクロスオリジンを許可、GET/POST/PUT/DELETE/OPTIONS を許可
 ```
 
-> <span style="color: #888888;">
+> 
 > ```properties
 > # ========== 数据源（MySQL） ==========
 > spring.datasource.url=jdbc:mysql://localhost:3306/smartoa
@@ -960,33 +960,33 @@ http://localhost:5173 のクロスオリジンを許可、GET/POST/PUT/DELETE/OP
 > # ========== CORS（WebConfig.java） ==========
 > 允许 http://localhost:5173 跨域，允许 GET/POST/PUT/DELETE/OPTIONS
 > ```
-> </span>
+> 
 
 ---
 
 ## 六、起動方法とテストアカウント
 
-> <span style="color: #888888;">## 六、启动方式与测试账号</span>
+> ## 六、启动方式与测试账号
 
 ### 6.1 環境要件
 
-> <span style="color: #888888;">### 6.1 环境要求</span>
+> ### 6.1 环境要求
 
 - JDK 21+
 - MySQL 8.0
 - Node.js 18+ / pnpm
 - Maven 3.8+
 
-> <span style="color: #888888;">
+> 
 > - JDK 21+
 > - MySQL 8.0
 > - Node.js 18+ / pnpm
 > - Maven 3.8+
-> </span>
+> 
 
 ### 6.2 初回デプロイ手順
 
-> <span style="color: #888888;">### 6.2 首次部署步骤</span>
+> ### 6.2 首次部署步骤
 
 1. データベースを作成：
    ```sql
@@ -1013,7 +1013,7 @@ http://localhost:5173 のクロスオリジンを許可、GET/POST/PUT/DELETE/OP
    pnpm run dev                   # → localhost:5173
    ```
 
-> <span style="color: #888888;">
+> 
 > 1. 创建数据库：
 >    ```sql
 >    CREATE DATABASE IF NOT EXISTS smartoa DEFAULT CHARACTER SET utf8mb4;
@@ -1038,11 +1038,11 @@ http://localhost:5173 のクロスオリジンを許可、GET/POST/PUT/DELETE/OP
 >    pnpm install
 >    pnpm run dev                   # → localhost:5173
 >    ```
-> </span>
+> 
 
 ### 6.3 テストアカウント
 
-> <span style="color: #888888;">### 6.3 测试账号</span>
+> ### 6.3 测试账号
 
 | ユーザー名 | パスワード | 氏名 | ロール | 用途 |
 |--------|------|------|------|------|
@@ -1052,7 +1052,7 @@ http://localhost:5173 のクロスオリジンを許可、GET/POST/PUT/DELETE/OP
 | lisi | 123456 | 李四 | EMPLOYEE | 製品部社員 |
 | zongjian2 | 123456 | 李总监 | MANAGER | 製品部ディレクター |
 
-> <span style="color: #888888;">
+> 
 > | 用户名 | 密码 | 姓名 | 角色 | 用途 |
 > |--------|------|------|------|------|
 > | admin | 123456 | 王经理 | MANAGER | 经理审批 + 模板管理 |
@@ -1060,27 +1060,27 @@ http://localhost:5173 のクロスオリジンを許可、GET/POST/PUT/DELETE/OP
 > | zongjian1 | 123456 | 张总监 | MANAGER | 总监审批 |
 > | lisi | 123456 | 李四 | EMPLOYEE | 产品部员工 |
 > | zongjian2 | 123456 | 李总监 | MANAGER | 产品部总监 |
-> </span>
+> 
 
 **推奨テストフロー：**
 
-> <span style="color: #888888;">**推荐测试流程：**</span>
+> **推荐测试流程：**
 
 1. `zhangsan` でログイン → 休暇申請を 1 件送信
 2. `admin` でログイン → 自分の承認 → 承認待ち → 承認
 3. `zhangsan` でログイン → 申請状態を確認
 
-> <span style="color: #888888;">
+> 
 > 1. 用 `zhangsan` 登录 → 提交一条请假申请
 > 2. 用 `admin` 登录 → 我的审批 → 待审批 → 通过
 > 3. 用 `zhangsan` 登录 → 查看申请状态
-> </span>
+> 
 
 ---
 
 ## 七、プロジェクト構造
 
-> <span style="color: #888888;">## 七、项目结构</span>
+> ## 七、项目结构
 
 ```
 smartoa/
@@ -1110,7 +1110,7 @@ smartoa/
 └── README.md                     # プロジェクト README
 ```
 
-> <span style="color: #888888;">
+> 
 > ```
 > smartoa/
 > ├── backend/
@@ -1138,10 +1138,10 @@ smartoa/
 > ├── CLAUDE.md                     # 项目说明与开发进度
 > └── README.md                     # 项目 README
 > ```
-> </span>
+> 
 
 ---
 
 -- SmartOA P2 技術文書 · 完 --
 
-> <span style="color: #888888;">— SmartOA P2 技术文档 · 完 —</span>
+> — SmartOA P2 技术文档 · 完 —
