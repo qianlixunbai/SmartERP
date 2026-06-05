@@ -1,6 +1,3 @@
-Here is the complete translated file:
-
-```markdown
 # インターフェース設計ドキュメント
 
 ## SmartOA 承認フロー管理システム API 仕様
@@ -31,7 +28,7 @@ JWT Bearer Token、リクエストヘッダー：`Authorization: Bearer <token>`
 { "code": 200, "message": "操作成功", "data": null }
 
 // 失敗
-{ "code": 500, "message": "エラー原因", "data": null }
+{ "code": 500, "message": "エラー理由", "data": null }
 ```
 
 ### 1.4 ステータスコード
@@ -42,7 +39,7 @@ JWT Bearer Token、リクエストヘッダー：`Authorization: Bearer <token>`
 | 401 | 401 | 未ログインまたはトークン期限切れ |
 | 403 | 403 | 権限なし |
 | 400 | 400 | リクエストパラメータ不正 |
-| 500 | 500 | サーバー内部エラー / ビジネス例外 |
+| 500 | 500 | サーバー内部エラー / 業務例外 |
 
 ---
 
@@ -84,13 +81,13 @@ POST /api/login
 }
 ```
 
-### 2.2 現在のユーザーを取得
+### 2.2 現在のユーザー取得
 
 ```
 GET /api/user/current
 ```
 
-### 2.3 ユーザー一覧を取得
+### 2.3 ユーザー一覧取得
 
 ```
 GET /api/users
@@ -163,7 +160,7 @@ DELETE /api/templates/{id}
 GET /api/templates/{id}/nodes
 ```
 
-**レスポンス：** `Result<List<ApprovalNode>>`、`sortOrder` 昇順で並べる
+**レスポンス：** `Result<List<ApprovalNode>>`、`sortOrder` 昇順でソート
 
 ### 3.7 テンプレートノード保存
 
@@ -173,13 +170,13 @@ POST /api/templates/{id}/nodes
 
 **権限：** MANAGER
 **リクエストボディ：** `List<ApprovalNode>`
-**説明：** 古いノードを削除（参照をクリア）してから、新しいノードをバッチ挿入し、自動的に `sortOrder` を割り当てる
+**説明：** 旧ノードを削除（参照をクリア）してから、新ノードを一括挿入、自動で `sortOrder` を割り当て
 
 **ノードフィールド（P2 完全版）：**
 
 ```json
 {
-  "nodeName": "部門ディレクター承認",
+  "nodeName": "部門長承認",
   "approverType": "DEPARTMENT_HEAD",
   "signType": "SINGLE",
   "approverIds": "2,3",
@@ -228,7 +225,7 @@ POST /api/leave/submit
 }
 ```
 
-**説明：** システムは自動的にテンプレートノードを読み取り、条件分岐を評価し、承認者を解決し（SINGLE/並行）、timeoutTime を設定し、承認フローを開始する
+**説明：** システムが自動でテンプレートノードを読み取り、条件分岐を評価し、承認者を解決（SINGLE/並列）、timeoutTime を設定し、承認フローを開始
 
 ### 4.2 承認操作
 
@@ -242,17 +239,17 @@ POST /api/leave/approve
 {
   "requestId": 1,
   "action": "APPROVE",
-  "comment": "休暇を承認"
+  "comment": "休暇を承認します"
 }
 ```
 
 **action の値：** `APPROVE` | `REJECT`
 
-**SINGLE モード：** currentApproverId を検証 → 進行/終了
-**並行モード：** approval_task を参照 → COUNTER_SIGN 全員同意後に進行 / OR_SIGN いずれか一人が同意すれば進行
-**REJECT：** フローを終了 + 他の並行タスクをスキップ
+**SINGLE モード：** currentApproverId を検証 → 次へ進む / 終了
+**並列モード：** approval_task を確認 → COUNTER_SIGN 全員同意で次へ進む / OR_SIGN 誰か一人が同意で次へ進む
+**REJECT：** フローを終了 + 他の並列タスクをスキップ
 
-### 4.3 申請取下げ
+### 4.3 申請取り下げ
 
 ```
 POST /api/leave/{id}/withdraw
@@ -260,7 +257,7 @@ POST /api/leave/{id}/withdraw
 
 **権限：** 申請者のみ
 **前提条件：** ステータスが PENDING
-**説明：** ステータス → WITHDRAWN、並行タスクをスキップ、currentApproverId/timeoutTime をクリア
+**説明：** ステータス → WITHDRAWN、並列タスクをスキップ、currentApproverId/timeoutTime をクリア
 
 ### 4.4 承認転送
 
@@ -269,7 +266,7 @@ POST /api/leave/{id}/transfer
 ```
 
 **権限：** 現在の承認者（SINGLE モードのみ）
-**制約：** 並行承認ノードは転送をサポートしない
+**制約：** 並列承認ノードでは転送不可
 
 **リクエストボディ：**
 
@@ -291,7 +288,7 @@ GET /api/leave/my-requests
 GET /api/leave/pending
 ```
 
-**説明：** `currentApproverId = 現在のユーザー` と `approval_task` 内の PENDING タスクを同時にマッチ
+**説明：** `currentApproverId = 現在のユーザー` と `approval_task` 内の PENDING タスクの両方を照合
 
 ### 4.7 処理済み一覧
 
@@ -315,7 +312,7 @@ GET /api/leave/{id}/records
 
 **レスポンス：** `Result<List<ApprovalRecord>>`、TIMEOUT_* システム自動操作記録を含む
 
-### 4.10 並行承認タスク照会（P2 新規）
+### 4.10 並列承認タスク照会（P2 新規）
 
 ```
 GET /api/leave/{id}/tasks
@@ -329,7 +326,7 @@ GET /api/leave/{id}/tasks
 POST /api/leave/repair
 ```
 
-**説明：** `currentApproverId = null` かつ関連する PENDING タスクがない滞留申請を修復する
+**説明：** `currentApproverId = null` かつ関連 PENDING タスクがない滞留申請を修復
 
 ---
 
@@ -386,13 +383,13 @@ GET /api/stats/export
 | approverType | VARCHAR(30) | 承認者タイプ |
 | approverId | BIGINT | 指定承認者 ID |
 | signType | VARCHAR(20) | 署名モード：SINGLE/COUNTER_SIGN/OR_SIGN |
-| approverIds | VARCHAR(1000) | 並行承認者 ID リスト（カンマ区切り） |
+| approverIds | VARCHAR(1000) | 並列承認者 ID リスト（カンマ区切り） |
 | conditionExpression | VARCHAR(500) | SpEL 条件式 |
 | timeoutHours | INT | タイムアウト時間数 |
 | timeoutAction | VARCHAR(30) | タイムアウトアクション：ESCALATE/AUTO_APPROVE/AUTO_REJECT |
 | escalateToUserId | BIGINT | タイムアウト転送先ユーザー ID |
 
-### 7.2 ApprovalTask（並行承認タスク）
+### 7.2 ApprovalTask（並列承認タスク）
 
 | フィールド | 型 | 説明 |
 |---|---|---|
@@ -406,7 +403,7 @@ GET /api/stats/export
 
 ## 8. インターフェース一覧
 
-| モジュール | 数 | キーパス |
+| モジュール | 数 | 主要パス |
 |---|---|---|
 | 認証 | 4 | /login, /user/current, /users, /logout |
 | テンプレート | 9 | /templates CRUD, /templates/{id}/nodes, /templates/{id}/fields |
@@ -418,4 +415,3 @@ GET /api/stats/export
 ---
 
 ドキュメントバージョン：v2.0（P2 完了） | 更新日：2026-05-27
-```
