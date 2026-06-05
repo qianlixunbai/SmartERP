@@ -1,24 +1,44 @@
-# 接口设计文档
+# インターフェース設計ドキュメント
 
-## SmartOA 审批流管理系统 API 规范
+> <span style="color: #888888;"># 接口设计文档</span>
+
+## SmartOA 承認フロー管理システム API 仕様
+
+> <span style="color: #888888;">## SmartOA 审批流管理系统 API 规范</span>
 
 ---
 
-## 1. 通用约定
+## 1. 一般規約
 
-### 1.1 基础路径
+> <span style="color: #888888;">## 1. 通用约定</span>
 
-所有 API 前缀：`/api`
+### 1.1 ベースパス
 
-### 1.2 认证方式
+> <span style="color: #888888;">### 1.1 基础路径</span>
 
-JWT Bearer Token，请求头：`Authorization: Bearer <token>`
+すべての API プレフィックス：`/api`
 
-白名单接口（无需认证）：`/api/login`
+> <span style="color: #888888;">所有 API 前缀：`/api`</span>
 
-### 1.3 响应格式
+### 1.2 認証方式
 
-统一使用 `Result<T>` 结构：
+> <span style="color: #888888;">### 1.2 认证方式</span>
+
+JWT Bearer Token、リクエストヘッダー：`Authorization: Bearer <token>`
+
+> <span style="color: #888888;">JWT Bearer Token，请求头：`Authorization: Bearer <token>`</span>
+
+ホワイトリストインターフェース（認証不要）：`/api/login`
+
+> <span style="color: #888888;">白名单接口（无需认证）：`/api/login`</span>
+
+### 1.3 レスポンス形式
+
+> <span style="color: #888888;">### 1.3 响应格式</span>
+
+統一して `Result<T>` 構造を使用する：
+
+> <span style="color: #888888;">统一使用 `Result<T>` 结构：</span>
 
 ```json
 // 成功（含数据）
@@ -31,7 +51,9 @@ JWT Bearer Token，请求头：`Authorization: Bearer <token>`
 { "code": 500, "message": "错误原因", "data": null }
 ```
 
-### 1.4 状态码
+### 1.4 ステータスコード
+
+> <span style="color: #888888;">### 1.4 状态码</span>
 
 | HTTP 状态码 | code | 含义 |
 |---|---|---|
@@ -43,15 +65,22 @@ JWT Bearer Token，请求头：`Authorization: Bearer <token>`
 
 ---
 
-## 2. 认证模块
+## 2. 認証モジュール
 
-### 2.1 登录
+> <span style="color: #888888;">## 2. 认证模块</span>
+
+### 2.1 ログイン
+
+> <span style="color: #888888;">### 2.1 登录</span>
 
 ```
 POST /api/login
 ```
 
-**请求体：**
+**リクエストボディ：**
+
+> <span style="color: #888888;">**请求体：**</span>
+
 ```json
 {
   "username": "zhangsan",
@@ -59,7 +88,10 @@ POST /api/login
 }
 ```
 
-**响应：**
+**レスポンス：**
+
+> <span style="color: #888888;">**响应：**</span>
+
 ```json
 {
   "code": 200,
@@ -79,21 +111,29 @@ POST /api/login
 }
 ```
 
-### 2.2 获取当前用户
+### 2.2 現在のユーザーを取得
+
+> <span style="color: #888888;">### 2.2 获取当前用户</span>
 
 ```
 GET /api/user/current
 ```
 
-### 2.3 获取用户列表
+### 2.3 ユーザー一覧を取得
+
+> <span style="color: #888888;">### 2.3 获取用户列表</span>
 
 ```
 GET /api/users
 ```
 
-**响应：** `Result<List<User>>`，password 字段被 `@JsonIgnore` 排除
+**レスポンス：** `Result<List<User>>`、password フィールドは `@JsonIgnore` で除外される
 
-### 2.4 登出
+> <span style="color: #888888;">**响应：** `Result<List<User>>`，password 字段被 `@JsonIgnore` 排除</span>
+
+### 2.4 ログアウト
+
+> <span style="color: #888888;">### 2.4 登出</span>
 
 ```
 POST /api/logout
@@ -101,31 +141,46 @@ POST /api/logout
 
 ---
 
-## 3. 审批模板模块
+## 3. 承認テンプレートモジュール
 
-### 3.1 模板列表
+> <span style="color: #888888;">## 3. 审批模板模块</span>
+
+### 3.1 テンプレート一覧
+
+> <span style="color: #888888;">### 3.1 模板列表</span>
 
 ```
 GET /api/templates
 ```
 
-**响应：** `Result<List<ApprovalTemplate>>`
+**レスポンス：** `Result<List<ApprovalTemplate>>`
 
-### 3.2 模板详情
+> <span style="color: #888888;">**响应：** `Result<List<ApprovalTemplate>>`</span>
+
+### 3.2 テンプレート詳細
+
+> <span style="color: #888888;">### 3.2 模板详情</span>
 
 ```
 GET /api/templates/{id}
 ```
 
-### 3.3 创建模板
+### 3.3 テンプレート作成
+
+> <span style="color: #888888;">### 3.3 创建模板</span>
 
 ```
 POST /api/templates
 ```
 
-**权限：** MANAGER
+**権限：** MANAGER
 
-**请求体：**
+> <span style="color: #888888;">**权限：** MANAGER</span>
+
+**リクエストボディ：**
+
+> <span style="color: #888888;">**请求体：**</span>
+
 ```json
 {
   "name": "请假申请",
@@ -134,42 +189,64 @@ POST /api/templates
 }
 ```
 
-### 3.4 更新模板
+### 3.4 テンプレート更新
+
+> <span style="color: #888888;">### 3.4 更新模板</span>
 
 ```
 PUT /api/templates/{id}
 ```
 
-**权限：** MANAGER
+**権限：** MANAGER
 
-### 3.5 删除模板
+> <span style="color: #888888;">**权限：** MANAGER</span>
+
+### 3.5 テンプレート削除
+
+> <span style="color: #888888;">### 3.5 删除模板</span>
 
 ```
 DELETE /api/templates/{id}
 ```
 
-**权限：** MANAGER
-**说明：** 级联删除关联的审批节点和表单字段
+**権限：** MANAGER
+**説明：** 関連する承認ノードとフォームフィールドをカスケード削除する
 
-### 3.6 模板节点列表
+> <span style="color: #888888;">**权限：** MANAGER
+**说明：** 级联删除关联的审批节点和表单字段</span>
+
+### 3.6 テンプレートノード一覧
+
+> <span style="color: #888888;">### 3.6 模板节点列表</span>
 
 ```
 GET /api/templates/{id}/nodes
 ```
 
-**响应：** `Result<List<ApprovalNode>>`，按 `sortOrder` 升序排列
+**レスポンス：** `Result<List<ApprovalNode>>`、`sortOrder` 昇順でソート
 
-### 3.7 保存模板节点
+> <span style="color: #888888;">**响应：** `Result<List<ApprovalNode>>`，按 `sortOrder` 升序排列</span>
+
+### 3.7 テンプレートノード保存
+
+> <span style="color: #888888;">### 3.7 保存模板节点</span>
 
 ```
 POST /api/templates/{id}/nodes
 ```
 
-**权限：** MANAGER
-**请求体：** `List<ApprovalNode>`
-**说明：** 先删除旧节点（清理引用），再批量插入新节点，自动分配 `sortOrder`
+**権限：** MANAGER
+**リクエストボディ：** `List<ApprovalNode>`
+**説明：** 古いノードを先に削除し（参照をクリア）、その後新しいノードをバッチ挿入し、`sortOrder` を自動割り当てする
 
-**节点字段（P2 完整版）：**
+> <span style="color: #888888;">**权限：** MANAGER
+**请求体：** `List<ApprovalNode>`
+**说明：** 先删除旧节点（清理引用），再批量插入新节点，自动分配 `sortOrder`</span>
+
+**ノードフィールド（P2 完全版）：**
+
+> <span style="color: #888888;">**节点字段（P2 完整版）：**</span>
+
 ```json
 {
   "nodeName": "部门总监审批",
@@ -183,33 +260,48 @@ POST /api/templates/{id}/nodes
 }
 ```
 
-### 3.8 删除节点
+### 3.8 ノード削除
+
+> <span style="color: #888888;">### 3.8 删除节点</span>
 
 ```
 DELETE /api/templates/{id}/nodes/{nodeId}
 ```
 
-**权限：** MANAGER
+**権限：** MANAGER
 
-### 3.9 模板字段列表
+> <span style="color: #888888;">**权限：** MANAGER</span>
+
+### 3.9 テンプレートフィールド一覧
+
+> <span style="color: #888888;">### 3.9 模板字段列表</span>
 
 ```
 GET /api/templates/{id}/fields
 ```
 
-**响应：** `Result<List<TemplateField>>`
+**レスポンス：** `Result<List<TemplateField>>`
+
+> <span style="color: #888888;">**响应：** `Result<List<TemplateField>>`</span>
 
 ---
 
-## 4. 请假申请模块
+## 4. 休暇申請モジュール
 
-### 4.1 提交申请
+> <span style="color: #888888;">## 4. 请假申请模块</span>
+
+### 4.1 申請提出
+
+> <span style="color: #888888;">### 4.1 提交申请</span>
 
 ```
 POST /api/leave/submit
 ```
 
-**请求体：**
+**リクエストボディ：**
+
+> <span style="color: #888888;">**请求体：**</span>
+
 ```json
 {
   "templateId": 1,
@@ -220,15 +312,22 @@ POST /api/leave/submit
 }
 ```
 
-**说明：** 系统自动读取模板节点，评估条件分支，解析审批人（SINGLE/并行），设置 timeoutTime，启动审批流程
+**説明：** システムが自動的にテンプレートノードを読み取り、条件分岐を評価し、承認者を解決し（SINGLE/並行）、timeoutTime を設定し、承認フローを開始する
 
-### 4.2 审批操作
+> <span style="color: #888888;">**说明：** 系统自动读取模板节点，评估条件分支，解析审批人（SINGLE/并行），设置 timeoutTime，启动审批流程</span>
+
+### 4.2 承認操作
+
+> <span style="color: #888888;">### 4.2 审批操作</span>
 
 ```
 POST /api/leave/approve
 ```
 
-**请求体：**
+**リクエストボディ：**
+
+> <span style="color: #888888;">**请求体：**</span>
+
 ```json
 {
   "requestId": 1,
@@ -237,101 +336,152 @@ POST /api/leave/approve
 }
 ```
 
-**action 取值：** `APPROVE` | `REJECT`
+**action の値：** `APPROVE` | `REJECT`
 
-**SINGLE 模式：** 校验 currentApproverId → 推进/终止
+> <span style="color: #888888;">**action 取值：** `APPROVE` | `REJECT`</span>
+
+**SINGLE モード：** currentApproverId を検証 → 進行/終了
+**並行モード：** approval_task を検索 → COUNTER_SIGN は全員同意後に進行 / OR_SIGN は任意の一人が同意で進行
+**REJECT：** フローを終了 + 他の並行タスクをスキップ
+
+> <span style="color: #888888;">**SINGLE 模式：** 校验 currentApproverId → 推进/终止
 **并行模式：** 查 approval_task → COUNTER_SIGN 全部同意后推进 / OR_SIGN 任一人同意即推进
-**REJECT：** 终止流程 + 跳过其他并行任务
+**REJECT：** 终止流程 + 跳过其他并行任务</span>
 
-### 4.3 撤回申请
+### 4.3 申請撤回
+
+> <span style="color: #888888;">### 4.3 撤回申请</span>
 
 ```
 POST /api/leave/{id}/withdraw
 ```
 
-**权限：** 仅申请人
-**前置条件：** 状态为 PENDING
-**说明：** 状态 → WITHDRAWN，跳过并行任务，清除 currentApproverId/timeoutTime
+**権限：** 申請者のみ
+**前提条件：** ステータスが PENDING
+**説明：** ステータス → WITHDRAWN、並行タスクをスキップ、currentApproverId/timeoutTime をクリア
 
-### 4.4 转派审批
+> <span style="color: #888888;">**权限：** 仅申请人
+**前置条件：** 状态为 PENDING
+**说明：** 状态 → WITHDRAWN，跳过并行任务，清除 currentApproverId/timeoutTime</span>
+
+### 4.4 承認の転派
+
+> <span style="color: #888888;">### 4.4 转派审批</span>
 
 ```
 POST /api/leave/{id}/transfer
 ```
 
-**权限：** 当前审批人（仅 SINGLE 模式）
-**约束：** 并行审批节点不支持转派
+**権限：** 現在の承認者（SINGLE モードのみ）
+**制約：** 並行承認ノードは転派に対応しない
 
-**请求体：**
+> <span style="color: #888888;">**权限：** 当前审批人（仅 SINGLE 模式）
+**约束：** 并行审批节点不支持转派</span>
+
+**リクエストボディ：**
+
+> <span style="color: #888888;">**请求体：**</span>
+
 ```json
 {
   "toUserId": 3
 }
 ```
 
-### 4.5 我的申请
+### 4.5 自分の申請一覧
+
+> <span style="color: #888888;">### 4.5 我的申请</span>
 
 ```
 GET /api/leave/my-requests
 ```
 
-### 4.6 待审批列表
+### 4.6 承認待ち一覧
+
+> <span style="color: #888888;">### 4.6 待审批列表</span>
 
 ```
 GET /api/leave/pending
 ```
 
-**说明：** 同时匹配 `currentApproverId = 当前用户` 和 `approval_task` 中 PENDING 任务
+**説明：** `currentApproverId = 現在のユーザー` と `approval_task` 内の PENDING タスクを同時にマッチングする
 
-### 4.7 已处理列表
+> <span style="color: #888888;">**说明：** 同时匹配 `currentApproverId = 当前用户` 和 `approval_task` 中 PENDING 任务</span>
+
+### 4.7 処理済み一覧
+
+> <span style="color: #888888;">### 4.7 已处理列表</span>
 
 ```
 GET /api/leave/done
 ```
 
-### 4.8 申请详情
+### 4.8 申請詳細
+
+> <span style="color: #888888;">### 4.8 申请详情</span>
 
 ```
 GET /api/leave/{id}
 ```
 
-**说明：** 含 timeoutTime、节点配置等完整信息
+**説明：** timeoutTime、ノード設定などの完全な情報を含む
 
-### 4.9 审批记录
+> <span style="color: #888888;">**说明：** 含 timeoutTime、节点配置等完整信息</span>
+
+### 4.9 承認記録
+
+> <span style="color: #888888;">### 4.9 审批记录</span>
 
 ```
 GET /api/leave/{id}/records
 ```
 
-**响应：** `Result<List<ApprovalRecord>>`，含 TIMEOUT_* 系统自动操作记录
+**レスポンス：** `Result<List<ApprovalRecord>>`、TIMEOUT_* のシステム自動操作記録を含む
 
-### 4.10 并行审批任务查询（P2 新增）
+> <span style="color: #888888;">**响应：** `Result<List<ApprovalRecord>>`，含 TIMEOUT_* 系统自动操作记录</span>
+
+### 4.10 並行承認タスク照会（P2 新規）
+
+> <span style="color: #888888;">### 4.10 并行审批任务查询（P2 新增）</span>
 
 ```
 GET /api/leave/{id}/tasks
 ```
 
-**响应：** `Result<List<ApprovalTask>>`，当前节点 PENDING 状态的审批任务
+**レスポンス：** `Result<List<ApprovalTask>>`、現在のノードの PENDING 状態の承認タスク
 
-### 4.11 滞留修复（P2 新增）
+> <span style="color: #888888;">**响应：** `Result<List<ApprovalTask>>`，当前节点 PENDING 状态的审批任务</span>
+
+### 4.11 滞留修復（P2 新規）
+
+> <span style="color: #888888;">### 4.11 滞留修复（P2 新增）</span>
 
 ```
 POST /api/leave/repair
 ```
 
-**说明：** 修复 `currentApproverId = null` 且无关联 PENDING 任务的滞留申请
+**説明：** `currentApproverId = null` かつ関連する PENDING タスクがない滞留申請を修復する
+
+> <span style="color: #888888;">**说明：** 修复 `currentApproverId = null` 且无关联 PENDING 任务的滞留申请</span>
 
 ---
 
-## 5. 统计模块
+## 5. 統計モジュール
 
-### 5.1 统计摘要
+> <span style="color: #888888;">## 5. 统计模块</span>
+
+### 5.1 統計サマリー
+
+> <span style="color: #888888;">### 5.1 统计摘要</span>
 
 ```
 GET /api/stats/summary
 ```
 
-**响应：**
+**レスポンス：**
+
+> <span style="color: #888888;">**响应：**</span>
+
 ```json
 {
   "code": 200,
@@ -348,23 +498,35 @@ GET /api/stats/summary
 
 ---
 
-## 6. 导出模块
+## 6. エクスポートモジュール
 
-### 6.1 导出请假单 Excel
+> <span style="color: #888888;">## 6. 导出模块</span>
+
+### 6.1 休暇申請 Excel エクスポート
+
+> <span style="color: #888888;">### 6.1 导出请假单 Excel</span>
 
 ```
 GET /api/stats/export
 ```
 
-**权限：** MANAGER
+**権限：** MANAGER
+**レスポンス：** `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` バイナリストリーム
+**ファイル名：** `请假单导出_2026-05-27.xlsx`
+
+> <span style="color: #888888;">**权限：** MANAGER
 **响应：** `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` 二进制流
-**文件名：** `请假单导出_2026-05-27.xlsx`
+**文件名：** `请假单导出_2026-05-27.xlsx`</span>
 
 ---
 
-## 7. 数据模型
+## 7. データモデル
 
-### 7.1 ApprovalNode（审批节点 — P2 完整版）
+> <span style="color: #888888;">## 7. 数据模型</span>
+
+### 7.1 ApprovalNode（承認ノード — P2 完全版）
+
+> <span style="color: #888888;">### 7.1 ApprovalNode（审批节点 — P2 完整版）</span>
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
@@ -381,7 +543,9 @@ GET /api/stats/export
 | timeoutAction | VARCHAR(30) | 超时动作：ESCALATE/AUTO_APPROVE/AUTO_REJECT |
 | escalateToUserId | BIGINT | 超时转派目标用户 ID |
 
-### 7.2 ApprovalTask（并行审批任务）
+### 7.2 ApprovalTask（並行承認タスク）
+
+> <span style="color: #888888;">### 7.2 ApprovalTask（并行审批任务）</span>
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
@@ -393,7 +557,9 @@ GET /api/stats/export
 
 ---
 
-## 8. 接口汇总
+## 8. インターフェース一覧
+
+> <span style="color: #888888;">## 8. 接口汇总</span>
 
 | 模块 | 数量 | 关键路径 |
 |---|---|---|
@@ -406,4 +572,6 @@ GET /api/stats/export
 
 ---
 
-> 文档版本：v2.0（P2 完成） | 更新日期：2026-05-27
+> <span style="color: #888888;">> 文档版本：v2.0（P2 完成） | 更新日期：2026-05-27</span>
+
+> ドキュメントバージョン：v2.0（P2 完了） | 更新日：2026-05-27
