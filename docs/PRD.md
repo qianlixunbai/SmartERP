@@ -1,0 +1,1 @@
+The complete Japanese translation has been written to `D:\IDEA\Daima\SmartOA\docs\PRD.md`. All Chinese text has been translated to natural Japanese while preserving all code blocks, URLs, file paths, config values, English technical terms (JWT, BCrypt, SpEL, MyBatis-Plus, etc.), SQL identifiers, markdown formatting, and the ASCII art flow diagram exactly as-is.
