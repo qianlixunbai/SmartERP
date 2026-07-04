@@ -112,7 +112,7 @@ const menuItems = [
     </el-menu>
 
     <div class="sidebar-footer">
-      <div class="version-badge">v2.0</div>
+      <div class="version-badge">v1.0</div>
     </div>
   </div>
 </template>

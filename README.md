@@ -1,6 +1,6 @@
-# SmartOA — シンプル OA 承認フロー管理システム
+# SmartOA — エンタープライズ ERP システム（OA モジュール v1.0）
 
-エンタープライズ級 OA 承認ワークフロー管理システム | Spring Boot 3 + Vue 3 + MyBatis-Plus + JWT
+エンタープライズ級 ERP システム | OA · Finance · Treasury · Portfolio · Analytics · AI
 
 <p align="center">
   <img src="https://img.shields.io/badge/Java-21-orange" alt="Java 21"/>
@@ -15,7 +15,7 @@
 
 ## プロジェクト概要
 
-SmartOA は企業の日常業務向けの**承認フロー管理システム**で、JWT 認証、承認テンプレート管理、休暇申請、経費精算、複式簿記をサポートします。コア設計は「テンプレート設定 + フローエンジン」を中心に展開し、条件分岐、並行承認、タイムアウト自動エスカレーションなどの高度な機能をサポートします。v2.0 では**金融グレードの経費精算モジュール**を追加し、複式簿記・BigDecimal 精度制御・楽観ロック・状態マシン・赤字消し戻し・監査ログを実装しています。
+SmartOA は企業向けの**モジュラー型 ERP システム**で、「OA → Finance → Treasury → Portfolio → Analytics → AI」の漸進的アーキテクチャを採用しています。現在の **v1.0（OA モジュール）** は完了済みで、JWT 認証、多段階承認エンジン（条件分岐/並行承認/タイムアウト自動エスカレーション）、休暇管理、経費精算、複式簿記などのエンタープライズ機能を含みます。コア設計は「テンプレート設定 + フローエンジン」を中心に展開し、今後は財務コア、資金管理、ポートフォリオ、BI 分析、AI アシスタントへと拡張していきます。
 
 ---
 
@@ -206,7 +206,7 @@ pnpm run dev
 - [x] **タイムアウト自動エスカレーション** — ESCALATE / AUTO_APPROVE / AUTO_REJECT、`@Scheduled` で5分ごとにチェック
 - [x] **滞留修復** — `repairStuckRequests()` で `currentApproverId` が null の異常滞留申請を修復
 
-### v2.0 経費精算 + 複式簿記
+### v1.0 経費精算 + 複式簿記
 
 - [x] **複式簿記エンジン** — 各経費精算が自動的に借方・貸方の仕訳を生成（SUM(debit) == SUM(credit) を保証）
 - [x] **BigDecimal 精度制御** — DECIMAL(19,2)、`setScale(2, HALF_UP)`、金額に double/float を使用しない
