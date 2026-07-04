@@ -1,4 +1,4 @@
-# SmartOA — 企业级 ERP 系统（OA 模块 v1.0）
+# SmartERP — 企业级 ERP 系统（OA 模块 v1.0）
 
 企业级 ERP 系统 | OA · Finance · Treasury · Portfolio · Analytics · AI
 
@@ -15,7 +15,7 @@
 
 ## 项目简介
 
-SmartOA 是一个面向企业的**模块化 ERP 平台**，采用「OA → Finance → Treasury → Portfolio → Analytics → AI」渐进式架构。当前 **v1.0（OA 模块）** 已完成，包含 JWT 认证、多级审批引擎（条件分支/并行审批/超时升级）、请假管理、经费报销、复式记账等企业级功能。最大亮点是 **Treasury & Portfolio Management（企业资金与投资管理）**，整合企业现金头寸、资金流预测、投资组合资产配置与风险分析。核心设计围绕"模板配置 + 流程引擎"展开，后续将逐步扩展至财务核算、资金管理、投资组合、BI 分析和 AI 助手。
+SmartERP 是一个面向企业的**模块化 ERP 平台**，采用「OA → Finance → Treasury → Portfolio → Analytics → AI」渐进式架构。当前 **v1.0（OA 模块）** 已完成，包含 JWT 认证、多级审批引擎（条件分支/并行审批/超时升级）、请假管理、经费报销、复式记账等企业级功能。最大亮点是 **Treasury & Portfolio Management（企业资金与投资管理）**，整合企业现金头寸、资金流预测、投资组合资产配置与风险分析。核心设计围绕"模板配置 + 流程引擎"展开，后续将逐步扩展至财务核算、资金管理、投资组合、BI 分析和 AI 助手。
 
 ---
 
@@ -40,9 +40,9 @@ SmartOA 是一个面向企业的**模块化 ERP 平台**，采用「OA → Finan
 ## 项目结构
 
 ```
-smartoa/
+smarterp/
 ├── backend/
-│   ├── src/main/java/com/smartoa/
+│   ├── src/main/java/com/smarterp/
 │   │   ├── common/              # Result<T> 统一响应、BusinessException、GlobalExceptionHandler
 │   │   ├── config/              # 安全配置、CORS、JWT 过滤器、乐观锁插件
 │   │   ├── controller/          # REST 控制器（6 个）
@@ -50,7 +50,7 @@ smartoa/
 │   │   ├── entity/              # 实体类（11 个）
 │   │   ├── mapper/              # MyBatis-Plus Mapper（11 个）
 │   │   └── service/             # 业务逻辑层（6 个）+ TimeoutScheduler
-│   ├── src/test/java/com/smartoa/service/
+│   ├── src/test/java/com/smarterp/service/
 │   │   ├── LeaveServiceTest.java       # 审批流程测试（18 个用例）
 │   │   ├── AccountingServiceTest.java  # 复式记账测试（11 个用例）
 │   │   ├── ExpenseServiceTest.java     # 经费报销测试（6 个用例）
@@ -97,7 +97,7 @@ cd backend && ./mvnw test
 | AccountingServiceTest | 11 | 复式记账（入账/冲销/试算平衡/科目余额） |
 | ExpenseServiceTest | 6 | 经费报销（提交/撤回/驳回） |
 | UserServiceTest | 5 | 登录与用户管理 |
-| SmartoaApplicationTests | 1 | 应用启动 |
+| SmartERPApplicationTests | 1 | 应用启动 |
 
 **AccountingServiceTest 详情：**
 - 入账: 5个（正常、精度、零值、负值、不同科目）
@@ -144,18 +144,18 @@ cd backend && ./mvnw test
 ### 1. 建库
 
 ```sql
-CREATE DATABASE smartoa DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE smarterp DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 然后依次导入 `docs/` 下的 SQL 脚本：
 
 ```bash
 mysql -u root -p123456 --default-character-set=utf8mb4 < docs/mysql-p0-upgrade.sql
-mysql -u root -p123456 --default-character-set=utf8mb4 smartoa < docs/mysql-p1-upgrade.sql
-mysql -u root -p123456 --default-character-set=utf8mb4 smartoa < docs/mysql-p2a-bcrypt.sql
-mysql -u root -p123456 --default-character-set=utf8mb4 smartoa < docs/mysql-p2b-parallel.sql
-mysql -u root -p123456 --default-character-set=utf8mb4 smartoa < docs/mysql-p2c-timeout.sql
-mysql -u root -p123456 --default-character-set=utf8mb4 smartoa < docs/mysql-p3-expense.sql
+mysql -u root -p123456 --default-character-set=utf8mb4 smarterp < docs/mysql-p1-upgrade.sql
+mysql -u root -p123456 --default-character-set=utf8mb4 smarterp < docs/mysql-p2a-bcrypt.sql
+mysql -u root -p123456 --default-character-set=utf8mb4 smarterp < docs/mysql-p2b-parallel.sql
+mysql -u root -p123456 --default-character-set=utf8mb4 smarterp < docs/mysql-p2c-timeout.sql
+mysql -u root -p123456 --default-character-set=utf8mb4 smarterp < docs/mysql-p3-expense.sql
 ```
 
 ### 2. 启动后端
@@ -285,4 +285,4 @@ MIT License
 
 ## 开发历史
 
-本分支（`github-cn`）为纯中文最终交付版。如需查看完整开发历史（66 个提交，含中日双语文档），请访问 [`github`](https://github.com/qianlixunbai/SmartOA/tree/github) 分支。
+本分支（`github-cn`）为纯中文最终交付版。如需查看完整开发历史（66 个提交，含中日双语文档），请访问 [`github`](https://github.com/qianlixunbai/SmartERP/tree/github) 分支。

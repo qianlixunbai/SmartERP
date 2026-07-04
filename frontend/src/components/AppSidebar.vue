@@ -30,7 +30,7 @@ const menuItems = [
   <div class="sidebar">
     <div class="sidebar-logo">
       <div class="logo-icon">S</div>
-      <span class="logo-text">SmartOA</span>
+      <span class="logo-text">SmartERP</span>
     </div>
 
     <el-menu

@@ -1,6 +1,6 @@
 # 数据库设计文档
 
-## SmartOA 审批流管理系统
+## SmartERP 审批流管理系统
 
 ---
 
@@ -11,7 +11,7 @@
 ## 1. 数据库概览
 | 项 | 值 |
 |---|---|
-| 数据库名 | smartoa |
+| 数据库名 | smarterp |
 | 字符集 | utf8mb4 |
 | 排序规则 | utf8mb4_unicode_ci |
 | 存储引擎 | InnoDB |
