@@ -1,4 +1,4 @@
-# SmartOA — エンタープライズ ERP システム（OA モジュール v1.0）
+# SmartERP — エンタープライズ ERP システム（OA モジュール v1.0）
 
 エンタープライズ級 ERP システム | OA · Finance · Treasury · Portfolio · Analytics · AI
 
@@ -15,7 +15,7 @@
 
 ## プロジェクト概要
 
-SmartOA は企業向けの**モジュラー型 ERP プラットフォーム**で、「OA → Finance → Treasury → Portfolio → Analytics → AI」の漸進的アーキテクチャを採用しています。現在の **v1.0（OA モジュール）** は完了済みで、JWT 認証、多段階承認エンジン（条件分岐/並行承認/タイムアウト自動エスカレーション）、休暇管理、経費精算、複式簿記などのエンタープライズ機能を含みます。最大のハイライトは **Treasury & Portfolio Management（企業資金・投資管理）** で、企業のキャッシュポジション、資金フロー予測、ポートフォリオの資産配分、リスク分析を統合的に管理します。コア設計は「テンプレート設定 + フローエンジン」を中心に展開し、今後は財務核算、資金管理、投資組合、BI 分析、AI アシスタントへと拡張していきます。
+SmartERP は企業向けの**モジュラー型 ERP プラットフォーム**で、「OA → Finance → Treasury → Portfolio → Analytics → AI」の漸進的アーキテクチャを採用しています。現在の **v1.0（OA モジュール）** は完了済みで、JWT 認証、多段階承認エンジン（条件分岐/並行承認/タイムアウト自動エスカレーション）、休暇管理、経費精算、複式簿記などのエンタープライズ機能を含みます。最大のハイライトは **Treasury & Portfolio Management（企業資金・投資管理）** で、企業のキャッシュポジション、資金フロー予測、ポートフォリオの資産配分、リスク分析を統合的に管理します。コア設計は「テンプレート設定 + フローエンジン」を中心に展開し、今後は財務核算、資金管理、投資組合、BI 分析、AI アシスタントへと拡張していきます。
 
 ---
 
@@ -40,9 +40,9 @@ SmartOA は企業向けの**モジュラー型 ERP プラットフォーム**で
 ## プロジェクト構成
 
 ```
-smartoa/
+smarterp/
 ├── backend/
-│   ├── src/main/java/com/smartoa/
+│   ├── src/main/java/com/smarterp/
 │   │   ├── common/              # Result<T>、BusinessException、GlobalExceptionHandler
 │   │   ├── config/              # セキュリティ設定、CORS、JWT フィルター、楽観ロック
 │   │   ├── controller/          # REST コントローラー（6つ）
@@ -50,7 +50,7 @@ smartoa/
 │   │   ├── entity/              # エンティティクラス（11つ）
 │   │   ├── mapper/              # MyBatis-Plus Mapper（11つ）
 │   │   └── service/             # ビジネスロジック層（6つ）+ TimeoutScheduler
-│   ├── src/test/java/com/smartoa/service/
+│   ├── src/test/java/com/smarterp/service/
 │   │   ├── LeaveServiceTest.java   # 承認フローテスト（18ケース）
 │   │   └── UserServiceTest.java    # ユーザーログインテスト（5ケース）
 │   ├── src/main/resources/
@@ -95,7 +95,7 @@ cd backend && ./mvnw test
 | AccountingServiceTest | 11 | 複式簿記（記帳・取消・試算平衡・残高） |
 | ExpenseServiceTest | 6 | 経費精算（提出・取下げ・却下） |
 | UserServiceTest | 5 | ログイン・ユーザー管理 |
-| SmartoaApplicationTests | 1 | アプリケーション起動 |
+| SmartERPApplicationTests | 1 | アプリケーション起動 |
 
 **AccountingServiceTest 内訳：**
 - 記帳: 5件（正常、精度、ゼロ値、負値、科目別）
@@ -140,7 +140,7 @@ cd backend && ./mvnw test
 ### 1. データベース作成
 
 ```sql
-CREATE DATABASE smartoa DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE smarterp DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 その後、`docs/` 配下の SQL スクリプトを順にインポートします。
@@ -270,4 +270,4 @@ MIT License
 
 ## 開発履歴
 
-このブランチ（`github-jp`）は純日本語の最終納品版です。開発履歴（66コミット、中日バイリンガル文書含む）をご覧になる場合は、[`github`](https://github.com/qianlixunbai/SmartOA/tree/github) ブランチをご参照ください。
+このブランチ（`github-jp`）は純日本語の最終納品版です。開発履歴（66コミット、中日バイリンガル文書含む）をご覧になる場合は、[`github`](https://github.com/qianlixunbai/SmartERP/tree/github) ブランチをご参照ください。
