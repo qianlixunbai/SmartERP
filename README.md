@@ -1,12 +1,13 @@
 # SmartOA — 简易 OA 审批流管理系统
 
-企业级 OA 审批流管理系统（P2 完成版） | Spring Boot 3 + Vue 3 + MyBatis-Plus + JWT
+企业级 OA 审批流管理系统 | Spring Boot 3 + Vue 3 + MyBatis-Plus + JWT
 
 <p align="center">
   <img src="https://img.shields.io/badge/Java-21-orange" alt="Java 21"/>
-  <img src="https://img.shields.io/badge/Spring_Boot-3.5.14-brightgreen" alt="Spring Boot 4"/>
+  <img src="https://img.shields.io/badge/Spring_Boot-3.5.14-brightgreen" alt="Spring Boot 3.5"/>
   <img src="https://img.shields.io/badge/Vue-3-4FC08D" alt="Vue 3"/>
   <img src="https://img.shields.io/badge/MySQL-8.0-blue" alt="MySQL 8"/>
+  <img src="https://img.shields.io/badge/Tests-24_passed-brightgreen" alt="Tests"/>
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License"/>
 </p>
 
@@ -26,6 +27,7 @@ SmartOA 是一个面向企业日常办公的**简易审批流管理系统**，�
 | 持久层 | MyBatis-Plus 3.5.15 |
 | 数据库 | MySQL 8.0 |
 | 认证鉴权 | JWT（jjwt 0.13.0）+ BCrypt |
+| 测试 | JUnit 5 + Spring Boot Test |
 | 前端框架 | Vue 3.5（Composition API） |
 | UI 组件库 | Element Plus 2.13.7 |
 | 构建工具 | Vite 8 |
@@ -48,26 +50,59 @@ smartoa/
 │   │   ├── entity/              # 实体类（7 个，含 ApprovalTask）
 │   │   ├── mapper/              # MyBatis-Plus Mapper（7 个）
 │   │   └── service/             # 业务逻辑层（5 个）+ TimeoutScheduler
+│   ├── src/test/java/com/smartoa/service/
+│   │   ├── LeaveServiceTest.java   # 审批流程测试（18 个用例）
+│   │   └── UserServiceTest.java    # 用户登录测试（5 个用例）
 │   ├── src/main/resources/
 │   │   └── application.properties
 │   └── pom.xml
-├── frontend/                    # Vue 3 前端
+├── frontend/
 │   └── src/
 │       ├── api/                 # 接口封装（auth / leave / template）
 │       ├── stores/              # Pinia 状态管理（auth / approval / users）
 │       ├── router/              # 路由配置
 │       ├── views/               # 页面组件（15 个 Page）
-│       ├── components/          # 共享组件（StatusTag / ApprovalTimeline）
+│       ├── components/          # 共享组件
+│       ├── styles/              # 全局 CSS 变量
 │       └── layouts/             # 布局组件（MainLayout）
-├── docs/
-│   ├── mysql-p0-upgrade.sql     # 建库建表 + 种子数据
-│   ├── mysql-p1-upgrade.sql     # 审批节点 + 表单字段
-│   ├── mysql-p3-bcrypt.sql      # BCrypt 密码迁移
-│   ├── mysql-p4-parallel.sql    # 并行审批
-│   └── mysql-p5-timeout.sql     # 超时自动升级
+├── docs/                        # SQL 迁移脚本
 ├── CLAUDE.md
 └── README.md
 ```
+
+---
+
+## 测试
+
+项目包含 **24 个单元测试**，覆盖审批流程的核心场景。
+
+```bash
+# 运行所有测试
+cd backend && ./mvnw test
+
+# 只运行某个测试类
+./mvnw test -Dtest=LeaveServiceTest
+./mvnw test -Dtest=UserServiceTest
+
+# 只运行某个测试方法
+./mvnw test -Dtest=LeaveServiceTest#testAdminSubmitLeave_ShouldSkipDirectLeaderNode
+```
+
+### 测试覆盖
+
+| 测试类 | 用例数 | 覆盖功能 |
+|--------|--------|---------|
+| LeaveServiceTest | 18 | 审批流程全部操作 |
+| UserServiceTest | 5 | 登录与用户管理 |
+| SmartoaApplicationTests | 1 | 应用启动 |
+
+**LeaveServiceTest 详情：**
+- 提交申请: 4个（admin跳过节点、员工正常、条件分支）
+- 审批操作: 5个（通过、驳回、越权、重复、记录保存）
+- 撤回: 3个（正常、非申请人、已驳回）
+- 转派: 2个（正常、非审批人）
+- 查询: 3个（详情、记录、待审批列表）
+- 滞留修复: 1个
 
 ---
 
@@ -77,7 +112,7 @@ smartoa/
 |------|------|
 | `sys_user` | 用户表（含直属领导、部门总监关联） |
 | `approval_template` | 审批模板表 |
-| `approval_node` | 审批节点表（支持条件表达式、签批模式、超时配置） |
+| `approval_node` | 审批节点表（支持条件表达式、签批模式、超时配置）⭐ 核心 |
 | `template_field` | 模板字段表 |
 | `leave_request` | 请假申请表（current_node_id + timeout_time 驱动流转） |
 | `approval_record` | 审批记录表 |
@@ -92,7 +127,6 @@ smartoa/
 - Java 21+
 - MySQL 8.0+
 - Node.js 18+ / pnpm
-- Maven 3.8+
 
 ### 1. 建库
 
@@ -126,8 +160,9 @@ pnpm run dev
 
 | 用户名 | 密码 | 角色 | 说明 |
 |--------|------|------|------|
-| admin | 123456 | MANAGER | 技术部经理 |
+| admin | 123456 | MANAGER | 技术部经理（无直属领导） |
 | zhangsan | 123456 | EMPLOYEE | 普通员工（直属领导=admin） |
+| lisi | 123456 | EMPLOYEE | 产品部员工 |
 
 ---
 
@@ -162,9 +197,16 @@ pnpm run dev
 - [x] **超时自动升级** — ESCALATE（转派）/ AUTO_APPROVE（自动通过）/ AUTO_REJECT（自动驳回），`@Scheduled` 每 5 分钟检查
 - [x] **滞留修复** — `repairStuckRequests()` 修复 `currentApproverId` 为 null 的异常滞留申请
 
+### 测试
+
+- [x] **单元测试** — JUnit 5 + Spring Boot Test，24 个测试用例
+- [x] **审批流程测试** — 覆盖提交、审批、驳回、撤回、转派、查询
+- [x] **异常测试** — 验证越权操作、重复操作、非法参数
+- [x] **数据一致性** — 使用 `@Transactional` 测试后自动回滚
+
 ---
 
-## API 概览
+## API 概要
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
