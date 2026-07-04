@@ -248,9 +248,10 @@ sys_user (ユーザー)
 |---|---|
 | `docs/mysql-p0-upgrade.sql` | P0 初期化：DB作成 + 4テーブル + シードデータ |
 | `docs/mysql-p1-upgrade.sql` | P1 アップグレード：approval_node + template_field + 新規フィールド |
-| `docs/mysql-p3-bcrypt.sql` | BCrypt パスワード移行 |
-| `docs/mysql-p4-parallel.sql` | P2 並行承認：sign_type + approver_ids + approval_task テーブル |
-| `docs/mysql-p5-timeout.sql` | P2 タイムアウトアップグレード：timeout_hours + timeout_action + escalate_to_user_id + timeout_time |
+| `docs/mysql-p2a-bcrypt.sql` | BCrypt パスワード移行 |
+| `docs/mysql-p2b-parallel.sql` | P2 並行承認：sign_type + approver_ids + approval_task テーブル |
+| `docs/mysql-p2c-timeout.sql` | P2 タイムアウトアップグレード：timeout_hours + timeout_action + escalate_to_user_id + timeout_time |
+| `docs/mysql-p3-expense.sql` | P3 経費精算+複式簿記：account/journal_entry/expense_request/expense_approval_task/audit_log |
 
 ---
 
