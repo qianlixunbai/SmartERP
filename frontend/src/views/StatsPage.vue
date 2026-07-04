@@ -39,7 +39,7 @@ onMounted(async () => {
         type: 'pie',
         radius: ['40%', '70%'],
         data: usageData.map(d => ({ name: d.templateName, value: d.count })),
-        emphasis: { itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.5)' } } }
+        emphasis: { itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.5)' } }
       }]
     })
   }
