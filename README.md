@@ -1,4 +1,4 @@
-# SmartOA — 简易 OA 审批流管理系统
+# SmartOA — OA 审批流管理系统
 
 企业级 OA 审批流管理系统 | Spring Boot 3 + Vue 3 + MyBatis-Plus + JWT
 
@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/Spring_Boot-3.5.14-brightgreen" alt="Spring Boot 3.5"/>
   <img src="https://img.shields.io/badge/Vue-3-4FC08D" alt="Vue 3"/>
   <img src="https://img.shields.io/badge/MySQL-8.0-blue" alt="MySQL 8"/>
-  <img src="https://img.shields.io/badge/Tests-24_passed-brightgreen" alt="Tests"/>
+  <img src="https://img.shields.io/badge/Tests-41_passed-brightgreen" alt="Tests"/>
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License"/>
 </p>
 
@@ -15,7 +15,7 @@
 
 ## 项目简介
 
-SmartOA 是一个面向企业日常办公的**简易审批流管理系统**，支持 JWT 认证、审批模板管理、请假申请与多级审批流转。核心设计围绕"模板配置 + 流程引擎"展开，支持条件分支、并行审批（会签/或签）、超时自动升级等高级特性。
+SmartOA 是一个面向企业日常办公的**审批流管理系统**，支持 JWT 认证、审批模板管理、请假申请、经费报销、复式记账。核心设计围绕"模板配置 + 流程引擎"展开，支持条件分支、并行审批（会签/或签）、超时自动升级等高级特性。P6 新增**金融级经费报销模块**，实现复式记账、BigDecimal 精度控制、乐观锁、状态机、红字冲销、审计日志。
 
 ---
 
@@ -44,28 +44,30 @@ smartoa/
 ├── backend/
 │   ├── src/main/java/com/smartoa/
 │   │   ├── common/              # Result<T> 统一响应、BusinessException、GlobalExceptionHandler
-│   │   ├── config/              # 安全配置、CORS、JWT 过滤器
-│   │   ├── controller/          # REST 控制器（5 个）
+│   │   ├── config/              # 安全配置、CORS、JWT 过滤器、乐观锁插件
+│   │   ├── controller/          # REST 控制器（6 个）
 │   │   ├── dto/                 # 数据传输对象
-│   │   ├── entity/              # 实体类（7 个，含 ApprovalTask）
-│   │   ├── mapper/              # MyBatis-Plus Mapper（7 个）
-│   │   └── service/             # 业务逻辑层（5 个）+ TimeoutScheduler
+│   │   ├── entity/              # 实体类（11 个）
+│   │   ├── mapper/              # MyBatis-Plus Mapper（11 个）
+│   │   └── service/             # 业务逻辑层（6 个）+ TimeoutScheduler
 │   ├── src/test/java/com/smartoa/service/
-│   │   ├── LeaveServiceTest.java   # 审批流程测试（18 个用例）
-│   │   └── UserServiceTest.java    # 用户登录测试（5 个用例）
+│   │   ├── LeaveServiceTest.java       # 审批流程测试（18 个用例）
+│   │   ├── AccountingServiceTest.java  # 复式记账测试（11 个用例）
+│   │   ├── ExpenseServiceTest.java     # 经费报销测试（6 个用例）
+│   │   └── UserServiceTest.java        # 用户登录测试（5 个用例）
 │   ├── src/main/resources/
 │   │   └── application.properties
 │   └── pom.xml
 ├── frontend/
 │   └── src/
-│       ├── api/                 # 接口封装（auth / leave / template）
-│       ├── stores/              # Pinia 状态管理（auth / approval / users）
+│       ├── api/                 # 接口封装
+│       ├── stores/              # Pinia 状态管理
 │       ├── router/              # 路由配置
-│       ├── views/               # 页面组件（15 个 Page）
+│       ├── views/               # 页面组件（21 个）
 │       ├── components/          # 共享组件
 │       ├── styles/              # 全局 CSS 变量
 │       └── layouts/             # 布局组件（MainLayout）
-├── docs/                        # SQL 迁移脚本
+├── docs/                        # SQL 迁移脚本（P0~P6）
 ├── CLAUDE.md
 └── README.md
 ```
@@ -74,7 +76,7 @@ smartoa/
 
 ## 测试
 
-项目包含 **24 个单元测试**，覆盖审批流程的核心场景。
+项目包含 **41 个单元测试**，覆盖审批流程、经费报销、复式记账的核心场景。
 
 ```bash
 # 运行所有测试
@@ -82,10 +84,9 @@ cd backend && ./mvnw test
 
 # 只运行某个测试类
 ./mvnw test -Dtest=LeaveServiceTest
+./mvnw test -Dtest=AccountingServiceTest
+./mvnw test -Dtest=ExpenseServiceTest
 ./mvnw test -Dtest=UserServiceTest
-
-# 只运行某个测试方法
-./mvnw test -Dtest=LeaveServiceTest#testAdminSubmitLeave_ShouldSkipDirectLeaderNode
 ```
 
 ### 测试覆盖
@@ -93,20 +94,27 @@ cd backend && ./mvnw test
 | 测试类 | 用例数 | 覆盖功能 |
 |--------|--------|---------|
 | LeaveServiceTest | 18 | 审批流程全部操作 |
+| AccountingServiceTest | 11 | 复式记账（入账/冲销/试算平衡/科目余额） |
+| ExpenseServiceTest | 6 | 经费报销（提交/撤回/驳回） |
 | UserServiceTest | 5 | 登录与用户管理 |
 | SmartoaApplicationTests | 1 | 应用启动 |
 
-**LeaveServiceTest 详情：**
-- 提交申请: 4个（admin跳过节点、员工正常、条件分支）
-- 审批操作: 5个（通过、驳回、越权、重复、记录保存）
-- 撤回: 3个（正常、非申请人、已驳回）
-- 转派: 2个（正常、非审批人）
-- 查询: 3个（详情、记录、待审批列表）
-- 滞留修复: 1个
+**AccountingServiceTest 详情：**
+- 入账: 5个（正常、精度、零值、负值、不同科目）
+- 冲销: 3个（正常、重复冲销、不存在分录）
+- 试算平衡: 2个（多笔入账、入账+冲销后余额归零）
+- 科目余额: 1个
+
+**ExpenseServiceTest 详情：**
+- 提交: 3个（正常、零值、负值）
+- 撤回: 2个（正常、非申请人撤回）
+- 驳回: 1个
 
 ---
 
 ## 数据库设计
+
+共 13 张表：
 
 | 表名 | 说明 |
 |------|------|
@@ -117,6 +125,11 @@ cd backend && ./mvnw test
 | `leave_request` | 请假申请表（current_node_id + timeout_time 驱动流转） |
 | `approval_record` | 审批记录表 |
 | `approval_task` | 并行审批任务表（会签/或签模式下各审批人状态） |
+| `account` | 会计科目表（10条种子数据） |
+| `journal_entry` | 会计分录表（复式记账核心，含乐观锁） |
+| `expense_request` | 经费报销申请表（含乐观锁） |
+| `expense_approval_task` | 经费审批并行任务表 |
+| `audit_log` | 审计日志表（只追加，不可修改/删除） |
 
 ---
 
@@ -134,7 +147,16 @@ cd backend && ./mvnw test
 CREATE DATABASE smartoa DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-然后依次导入 `docs/` 下的 SQL 脚本。
+然后依次导入 `docs/` 下的 SQL 脚本：
+
+```bash
+mysql -u root -p123456 --default-character-set=utf8mb4 < docs/mysql-p0-upgrade.sql
+mysql -u root -p123456 --default-character-set=utf8mb4 smartoa < docs/mysql-p1-upgrade.sql
+mysql -u root -p123456 --default-character-set=utf8mb4 smartoa < docs/mysql-p3-bcrypt.sql
+mysql -u root -p123456 --default-character-set=utf8mb4 smartoa < docs/mysql-p4-parallel.sql
+mysql -u root -p123456 --default-character-set=utf8mb4 smartoa < docs/mysql-p5-timeout.sql
+mysql -u root -p123456 --default-character-set=utf8mb4 smartoa < docs/mysql-p6-expense.sql
+```
 
 ### 2. 启动后端
 
@@ -179,7 +201,6 @@ pnpm run dev
 
 ### P1 升级功能
 
-- [x] 8 张数据库表设计
 - [x] 可配置多级审批引擎（approval_node 表驱动，动态节点遍历）
 - [x] 同意 / 拒绝 / 撤回 / 转派四种操作
 - [x] 审批节点配置 UI（模板编辑时可添加/删除/拖拽排序节点）
@@ -197,11 +218,24 @@ pnpm run dev
 - [x] **超时自动升级** — ESCALATE（转派）/ AUTO_APPROVE（自动通过）/ AUTO_REJECT（自动驳回），`@Scheduled` 每 5 分钟检查
 - [x] **滞留修复** — `repairStuckRequests()` 修复 `currentApproverId` 为 null 的异常滞留申请
 
-### 测试
+### P6 经费报销 + 复式记账
 
-- [x] **单元测试** — JUnit 5 + Spring Boot Test，24 个测试用例
+- [x] **复式记账引擎** — 每笔报销自动生成借方/贷方分录，保证 SUM(debit) == SUM(credit)
+- [x] **BigDecimal 精度控制** — DECIMAL(19,2)，`setScale(2, HALF_UP)`，金额不使用 double/float
+- [x] **乐观锁** — `@Version` 注解 + `OptimisticLockerInnerInterceptor`，防止并发审批冲突
+- [x] **状态机** — DRAFT → PENDING → APPROVED → POSTED（已入账不可修改，只能红字冲销）
+- [x] **红字冲销** — 生成借贷互换的反向分录，`memo="冲销#原交易ID"`
+- [x] **审计日志** — 只追加（UPDATE/DELETE 不可），记录全部操作（SUBMIT/APPROVE/REJECT/WITHDRAW/POST/REVERSE）
+- [x] **审批流共用** — 复用 `approval_node` 表驱动，独立 `expense_approval_task` 任务表
+- [x] **SpEL 条件分支** — `ExpenseConditionVars(amount, category)` 支持金额/类别条件路由
+- [x] **入账自动化** — 审批通过时自动调用 `AccountingService.post()` 生成分录
+
+### 单元测试
+
+- [x] **41 个测试用例** — JUnit 5 + Spring Boot Test
 - [x] **审批流程测试** — 覆盖提交、审批、驳回、撤回、转派、查询
-- [x] **异常测试** — 验证越权操作、重复操作、非法参数
+- [x] **复式记账测试** — 入账精度、冲销正确性、试算平衡、异常校验
+- [x] **经费报销测试** — 提交校验、状态机流转、权限验证
 - [x] **数据一致性** — 使用 `@Transactional` 测试后自动回滚
 
 ---
@@ -229,6 +263,17 @@ pnpm run dev
 | POST | `/api/leave/repair` | 滞留修复 |
 | GET | `/api/stats/summary` | 统计摘要 |
 | GET | `/api/stats/export` | Excel 导出 |
+| POST | `/api/expense/submit` | 提交经费报销 |
+| POST | `/api/expense/approve` | 审批/驳回经费 |
+| POST | `/api/expense/{id}/withdraw` | 撤回经费 |
+| POST | `/api/expense/{id}/reverse` | 红字冲销（管理员） |
+| GET | `/api/expense/my-expenses` | 我的报销记录 |
+| GET | `/api/expense/pending` | 待审批经费 |
+| GET | `/api/expense/all` | 全部经费（管理员） |
+| GET | `/api/expense/{id}` | 经费详情 |
+| GET | `/api/expense/{id}/audit-logs` | 审计日志 |
+| GET | `/api/accounting/trial-balance` | 试算平衡表 |
+| GET | `/api/accounting/balances` | 科目余额表 |
 
 ---
 
