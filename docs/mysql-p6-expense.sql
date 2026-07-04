@@ -1,9 +1,9 @@
 -- ============================================================
--- SmartOA P6 — 经费报销 + 复式记账
--- 用法：mysql -u root -p123456 smartoa < docs/mysql-p6-expense.sql
+-- SmartERP v1.0 — 经费报销 + 复式记账
+-- 用法：mysql -u root -p123456 smarterp < docs/mysql-p6-expense.sql
 -- ============================================================
 
-USE smartoa;
+USE smarterp;
 
 -- ==================== 建表 ====================
 

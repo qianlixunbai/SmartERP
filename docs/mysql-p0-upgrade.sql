@@ -1,10 +1,10 @@
 -- ============================================================
--- SmartOA P0 — MySQL 建库 + 建表 + 种子数据（一次性执行）
+-- SmartERP P0 — MySQL 建库 + 建表 + 种子数据（一次性执行）
 -- 用法：打开 MySQL Workbench，粘贴全部内容，执行
 -- ============================================================
 
-CREATE DATABASE IF NOT EXISTS smartoa DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE smartoa;
+CREATE DATABASE IF NOT EXISTS smarterp DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE smarterp;
 
 -- ==================== 建表 ====================
 
