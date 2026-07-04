@@ -54,7 +54,20 @@ CREATE TABLE IF NOT EXISTS expense_request (
     INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 4. 审计日志表（只追加，不删不改）
+-- 4. 经费审批并行任务表
+CREATE TABLE IF NOT EXISTS expense_approval_task (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    expense_request_id BIGINT NOT NULL COMMENT '经费申请ID',
+    node_id BIGINT NOT NULL COMMENT '审批节点ID',
+    approver_id BIGINT NOT NULL COMMENT '审批人ID',
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING/COMPLETED/SKIPPED',
+    create_time DATETIME NOT NULL,
+    update_time DATETIME NOT NULL,
+    INDEX idx_expense (expense_request_id),
+    INDEX idx_approver (approver_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 5. 审计日志表（只追加，不删不改）
 CREATE TABLE IF NOT EXISTS audit_log (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     action VARCHAR(50) NOT NULL COMMENT '操作类型: SUBMIT/APPROVE/REJECT/WITHDRAW/POST/REVERSE',
