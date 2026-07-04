@@ -91,6 +91,42 @@ const routes = [
     meta: { title: '用户列表', requiresAuth: true, role: 'MANAGER' }
   },
   {
+    path: '/expense/submit',
+    name: 'SubmitExpense',
+    component: () => import('@/views/SubmitExpensePage.vue'),
+    meta: { title: '经费报销', requiresAuth: true }
+  },
+  {
+    path: '/expense/my',
+    name: 'MyExpenses',
+    component: () => import('@/views/MyExpensesPage.vue'),
+    meta: { title: '我的报销', requiresAuth: true }
+  },
+  {
+    path: '/expense/pending',
+    name: 'PendingExpenses',
+    component: () => import('@/views/PendingExpensesPage.vue'),
+    meta: { title: '待审批经费', requiresAuth: true }
+  },
+  {
+    path: '/expense/:id',
+    name: 'ExpenseDetail',
+    component: () => import('@/views/ExpenseDetailPage.vue'),
+    meta: { title: '经费详情', requiresAuth: true }
+  },
+  {
+    path: '/accounting/accounts',
+    name: 'AccountList',
+    component: () => import('@/views/AccountListPage.vue'),
+    meta: { title: '会计科目', requiresAuth: true, role: 'MANAGER' }
+  },
+  {
+    path: '/accounting/trial-balance',
+    name: 'TrialBalance',
+    component: () => import('@/views/TrialBalancePage.vue'),
+    meta: { title: '试算平衡', requiresAuth: true, role: 'MANAGER' }
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('@/views/NotFoundPage.vue'),

@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { DocumentAdd, List, Setting, Plus, DataAnalysis, Download, HomeFilled, Clock, Files, Avatar } from '@element-plus/icons-vue'
+import { DocumentAdd, List, Setting, Plus, DataAnalysis, Download, HomeFilled, Clock, Files, Avatar, Money, WalletFilled, Coin } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const auth = useAuthStore()
@@ -46,6 +46,40 @@ const menuItems = [
         <span>{{ item.title }}</span>
       </el-menu-item>
 
+      <el-sub-menu index="/expense-group" class="sub-menu">
+        <template #title>
+          <el-icon><Money /></el-icon>
+          <span>经费报销</span>
+        </template>
+        <el-menu-item index="/expense/submit">
+          <el-icon><Plus /></el-icon>
+          <span>提交报销</span>
+        </el-menu-item>
+        <el-menu-item index="/expense/my">
+          <el-icon><Files /></el-icon>
+          <span>我的报销</span>
+        </el-menu-item>
+        <el-menu-item index="/expense/pending">
+          <el-icon><Clock /></el-icon>
+          <span>待审批经费</span>
+        </el-menu-item>
+      </el-sub-menu>
+
+      <el-sub-menu v-if="auth.isManager" index="/accounting-group" class="sub-menu">
+        <template #title>
+          <el-icon><Coin /></el-icon>
+          <span>记账管理</span>
+        </template>
+        <el-menu-item index="/accounting/accounts">
+          <el-icon><List /></el-icon>
+          <span>会计科目</span>
+        </el-menu-item>
+        <el-menu-item index="/accounting/trial-balance">
+          <el-icon><DataAnalysis /></el-icon>
+          <span>试算平衡</span>
+        </el-menu-item>
+      </el-sub-menu>
+
       <el-sub-menu v-if="auth.isManager" index="/templates-group" class="sub-menu">
         <template #title>
           <el-icon><Setting /></el-icon>
@@ -78,7 +112,7 @@ const menuItems = [
     </el-menu>
 
     <div class="sidebar-footer">
-      <div class="version-badge">v2.0 P2</div>
+      <div class="version-badge">v3.0 P6</div>
     </div>
   </div>
 </template>
