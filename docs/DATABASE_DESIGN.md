@@ -15,7 +15,7 @@
 | 文字セット | utf8mb4 |
 | 照合順序 | utf8mb4_unicode_ci |
 | ストレージエンジン | InnoDB |
-| テーブル数 | 8 |
+| テーブル数 | 13 |
 
 ---
 
@@ -251,7 +251,7 @@ sys_user (ユーザー)
 | `docs/mysql-p2a-bcrypt.sql` | BCrypt パスワード移行 |
 | `docs/mysql-p2b-parallel.sql` | P2 並行承認：sign_type + approver_ids + approval_task テーブル |
 | `docs/mysql-p2c-timeout.sql` | P2 タイムアウトアップグレード：timeout_hours + timeout_action + escalate_to_user_id + timeout_time |
-| `docs/mysql-p3-expense.sql` | P3 経費精算+複式簿記：account/journal_entry/expense_request/expense_approval_task/audit_log |
+| `docs/mysql-p3-expense.sql` | v2.0 経費精算+複式簿記：account/journal_entry/expense_request/expense_approval_task/audit_log |
 
 ---
 
