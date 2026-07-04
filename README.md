@@ -1,6 +1,6 @@
-# SmartOA — OA 审批流管理系统
+# SmartOA — 企业级 ERP 系统（OA 模块 v1.0）
 
-企业级 OA 审批流管理系统 | Spring Boot 3 + Vue 3 + MyBatis-Plus + JWT
+企业级 ERP 系统 | OA · Finance · Treasury · Portfolio · Analytics · AI
 
 <p align="center">
   <img src="https://img.shields.io/badge/Java-21-orange" alt="Java 21"/>
@@ -15,7 +15,7 @@
 
 ## 项目简介
 
-SmartOA 是一个面向企业日常办公的**审批流管理系统**，支持 JWT 认证、审批模板管理、请假申请、经费报销、复式记账。核心设计围绕"模板配置 + 流程引擎"展开，支持条件分支、并行审批（会签/或签）、超时自动升级等高级特性。v2.0 新增**金融级经费报销模块**，实现复式记账、BigDecimal 精度控制、乐观锁、状态机、红字冲销、审计日志。
+SmartOA 是一个面向企业的**模块化 ERP 系统**，采用「OA → Finance → Treasury → Portfolio → Analytics → AI」渐进式架构。当前 **v1.0（OA 模块）** 已完成，包含 JWT 认证、多级审批引擎（条件分支/并行审批/超时升级）、请假管理、经费报销、复式记账等企业级功能。核心设计围绕"模板配置 + 流程引擎"展开，后续将逐步扩展至财务核心、资金管理、投资组合、BI 分析和 AI 助手。
 
 ---
 
@@ -67,7 +67,7 @@ smartoa/
 │       ├── components/          # 共享组件
 │       ├── styles/              # 全局 CSS 变量
 │       └── layouts/             # 布局组件（MainLayout）
-├── docs/                        # SQL 迁移脚本（P0~P2 + v2.0）
+├── docs/                        # SQL 迁移脚本（v1.0）
 ├── CLAUDE.md
 └── README.md
 ```
@@ -218,7 +218,7 @@ pnpm run dev
 - [x] **超时自动升级** — ESCALATE（转派）/ AUTO_APPROVE（自动通过）/ AUTO_REJECT（自动驳回），`@Scheduled` 每 5 分钟检查
 - [x] **滞留修复** — `repairStuckRequests()` 修复 `currentApproverId` 为 null 的异常滞留申请
 
-### v2.0 经费报销 + 复式记账
+### v1.0 经费报销 + 复式记账
 
 - [x] **复式记账引擎** — 每笔报销自动生成借方/贷方分录，保证 SUM(debit) == SUM(credit)
 - [x] **BigDecimal 精度控制** — DECIMAL(19,2)，`setScale(2, HALF_UP)`，金额不使用 double/float
