@@ -11,6 +11,8 @@
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License"/>
 </p>
 
+> **SmartERP 正在持续演进为一体化企业管理平台，融合办公自动化、财务核算、资金管理和投资组合分析。**
+
 ---
 
 ## 项目简介
@@ -274,6 +276,21 @@ pnpm run dev
 | GET | `/api/expense/{id}/audit-logs` | 审计日志 |
 | GET | `/api/accounting/trial-balance` | 试算平衡表 |
 | GET | `/api/accounting/balances` | 科目余额表 |
+
+---
+
+## Roadmap
+
+| 版本 | 模块 | 目的 |
+|:---:|------|------|
+| v1.0 ✅ | **OA** | 验证审批流程引擎，建立复式记账基础 |
+| v2.0 🚧 | **Accounting** | 解决企业财务核算，实现凭证与科目管理 |
+| v3.0 📅 | **Treasury** | 统一管理现金流、银行账户和资金调拨 |
+| v4.0 📅 | **Portfolio** | 管理闲置资金投资，提供收益率与风险分析 |
+| v5.0 📅 | **Analytics** | 全数据汇总至 BI 可视化看板 |
+| v6.0 📅 | **AI** | AI 辅助审批建议、财务分析与风险预测 |
+
+> 详细规划请查看：[docs/ROADMAP.md](docs/ROADMAP.md)
 
 ---
 
