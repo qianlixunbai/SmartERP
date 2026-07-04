@@ -206,6 +206,13 @@ public class LeaveService {
             ApprovalNode node = nodes.get(i);
             if (evaluateCondition(node.getConditionExpression(), request)) {
                 List<Long> approverIds = resolveApprovers(node, applicant);
+
+                // 审批人为空时跳过该节点，继续下一个
+                if (approverIds == null || approverIds.isEmpty()) {
+                    log.info("跳过节点【{}】（无可用审批人）", node.getNodeName());
+                    continue;
+                }
+
                 request.setCurrentNodeId(node.getId());
 
                 if (isParallel(node)) {
@@ -262,6 +269,9 @@ public class LeaveService {
         }
     }
 
+    /**
+     * 解析节点的审批人列表。返回 null 表示该节点应被跳过（如用户没有直属领导）。
+     */
     private List<Long> resolveApprovers(ApprovalNode node, User applicant) {
         if (!isParallel(node)) {
             Long singleId = switch (node.getApproverType()) {
@@ -271,13 +281,15 @@ public class LeaveService {
                 default -> throw new BusinessException("不支持的审批人类型: " + node.getApproverType());
             };
             if (singleId == null) {
-                throw new BusinessException("节点【" + node.getNodeName() + "】无法确定审批人");
+                log.info("节点【{}】审批人为空（{}），自动跳过", node.getNodeName(), node.getApproverType());
+                return null; // 返回 null 表示跳过
             }
             return List.of(singleId);
         }
 
         if (node.getApproverIds() == null || node.getApproverIds().isBlank()) {
-            throw new BusinessException("并行签批节点【" + node.getNodeName() + "】缺少审批人配置");
+            log.info("并行签批节点【{}】无审批人配置，自动跳过", node.getNodeName());
+            return null;
         }
         return Arrays.stream(node.getApproverIds().split(","))
                 .map(String::trim)

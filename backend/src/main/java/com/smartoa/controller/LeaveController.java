@@ -28,9 +28,6 @@ public class LeaveController {
         if (user == null) {
             throw new BusinessException(401, "请先登录");
         }
-        if (user.getDirectLeaderId() == null) {
-            throw new BusinessException("您尚未分配直属领导，无法提交");
-        }
         leaveService.submitLeave(user.getId(), dto);
         return Result.success(null, "提交成功");
     }
