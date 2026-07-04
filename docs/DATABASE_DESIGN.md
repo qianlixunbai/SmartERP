@@ -15,7 +15,7 @@
 | 字符集 | utf8mb4 |
 | 排序规则 | utf8mb4_unicode_ci |
 | 存储引擎 | InnoDB |
-| 表数量 | 8 |
+| 表数量 | 13 |
 
 ---
 
@@ -367,7 +367,7 @@ sys_user (用户)
 | `docs/mysql-p2a-bcrypt.sql` | BCrypt 密码迁移 |
 | `docs/mysql-p2b-parallel.sql` | P2 并行审批：sign_type + approver_ids + approval_task 表 |
 | `docs/mysql-p2c-timeout.sql` | P2 超时升级：timeout_hours + timeout_action + escalate_to_user_id + timeout_time |
-| `docs/mysql-p3-expense.sql` | P3 经费报销+复式记账：account/journal_entry/expense_request/expense_approval_task/audit_log |
+| `docs/mysql-p3-expense.sql` | v2.0 经费报销+复式记账：account/journal_entry/expense_request/expense_approval_task/audit_log |
 
 ---
 
