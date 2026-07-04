@@ -1,6 +1,6 @@
 # SmartERP — 企业级 ERP 系统（OA 模块 v1.0）
 
-企业级 ERP 系统 | OA · Finance · Treasury · Portfolio · Analytics · AI
+企业级 ERP 系统 | HR · OA · Finance · Treasury · Portfolio · AI
 
 <p align="center">
   <img src="https://img.shields.io/badge/Java-21-orange" alt="Java 21"/>
