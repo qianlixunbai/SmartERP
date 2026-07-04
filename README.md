@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/Spring_Boot-3.5.14-brightgreen" alt="Spring Boot 3.5"/>
   <img src="https://img.shields.io/badge/Vue-3-4FC08D" alt="Vue 3"/>
   <img src="https://img.shields.io/badge/MySQL-8.0-blue" alt="MySQL 8"/>
-  <img src="https://img.shields.io/badge/Tests-24_passed-brightgreen" alt="Tests"/>
+  <img src="https://img.shields.io/badge/Tests-41_passed-brightgreen" alt="Tests"/>
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License"/>
 </p>
 
@@ -15,7 +15,7 @@
 
 ## プロジェクト概要
 
-SmartOA は企業の日常業務向けの**シンプルな承認フロー管理システム**で、JWT 認証、承認テンプレート管理、休暇申請と多段階承認フローをサポートします。コア設計は「テンプレート設定 + フローエンジン」を中心に展開し、条件分岐、並行承認、タイムアウト自動エスカレーションなどの高度な機能をサポートします。
+SmartOA は企業の日常業務向けの**承認フロー管理システム**で、JWT 認証、承認テンプレート管理、休暇申請、経費精算、複式簿記をサポートします。コア設計は「テンプレート設定 + フローエンジン」を中心に展開し、条件分岐、並行承認、タイムアウト自動エスカレーションなどの高度な機能をサポートします。P6 では**金融グレードの経費精算モジュール**を追加し、複式簿記・BigDecimal 精度制御・楽観ロック・状態マシン・赤字消し戻し・監査ログを実装しています。
 
 ---
 
@@ -44,12 +44,12 @@ smartoa/
 ├── backend/
 │   ├── src/main/java/com/smartoa/
 │   │   ├── common/              # Result<T>、BusinessException、GlobalExceptionHandler
-│   │   ├── config/              # セキュリティ設定、CORS、JWT フィルター
-│   │   ├── controller/          # REST コントローラー（5つ）
+│   │   ├── config/              # セキュリティ設定、CORS、JWT フィルター、楽観ロック
+│   │   ├── controller/          # REST コントローラー（6つ）
 │   │   ├── dto/                 # データ転送オブジェクト
-│   │   ├── entity/              # エンティティクラス（7つ）
-│   │   ├── mapper/              # MyBatis-Plus Mapper（7つ）
-│   │   └── service/             # ビジネスロジック層（5つ）+ TimeoutScheduler
+│   │   ├── entity/              # エンティティクラス（11つ）
+│   │   ├── mapper/              # MyBatis-Plus Mapper（11つ）
+│   │   └── service/             # ビジネスロジック層（6つ）+ TimeoutScheduler
 │   ├── src/test/java/com/smartoa/service/
 │   │   ├── LeaveServiceTest.java   # 承認フローテスト（18ケース）
 │   │   └── UserServiceTest.java    # ユーザーログインテスト（5ケース）
@@ -74,7 +74,7 @@ smartoa/
 
 ## テスト
 
-プロジェクトには **24 件のユニットテスト**が含まれており、承認フローの主要なシナリオをカバーしています。
+プロジェクトには **41 件のユニットテスト**が含まれており、承認フロー・経費精算・複式簿記の主要なシナリオをカバーしています。
 
 ```bash
 # 全テスト実行
@@ -83,9 +83,8 @@ cd backend && ./mvnw test
 # 特定のテストクラスのみ実行
 ./mvnw test -Dtest=LeaveServiceTest
 ./mvnw test -Dtest=UserServiceTest
-
-# 特定のテストメソッドのみ実行
-./mvnw test -Dtest=LeaveServiceTest#testAdminSubmitLeave_ShouldSkipDirectLeaderNode
+./mvnw test -Dtest=AccountingServiceTest
+./mvnw test -Dtest=ExpenseServiceTest
 ```
 
 ### テストカバレッジ
@@ -93,16 +92,21 @@ cd backend && ./mvnw test
 | テストクラス | ケース数 | カバー機能 |
 |-------------|---------|-----------|
 | LeaveServiceTest | 18 | 承認フロー全操作 |
+| AccountingServiceTest | 11 | 複式簿記（記帳・取消・試算平衡・残高） |
+| ExpenseServiceTest | 6 | 経費精算（提出・取下げ・却下） |
 | UserServiceTest | 5 | ログイン・ユーザー管理 |
 | SmartoaApplicationTests | 1 | アプリケーション起動 |
 
-**LeaveServiceTest 内訳：**
-- 申請提出: 4件（adminノードスキップ、社員通常、条件分岐）
-- 承認操作: 5件（承認、却下、権限超越、重複、記録保存）
-- 取下げ: 3件（正常、非申請者、却下済み）
-- 転送: 2件（正常、非承認者）
-- 照会: 3件（詳細、記録、保留リスト）
-- 滞留修復: 1件
+**AccountingServiceTest 内訳：**
+- 記帳: 5件（正常、精度、ゼロ値、負値、科目別）
+- 取消: 3件（正常、重複取消、不存在）
+- 試算平衡: 2件（複数記帳、記帳+取消後のバランス）
+- 科目残高: 1件
+
+**ExpenseServiceTest 内訳：**
+- 提出: 3件（正常、ゼロ値、負値）
+- 取下げ: 2件（正常、非申請者却下）
+- 却下: 1件（承認者による却下）
 
 ---
 
@@ -117,6 +121,11 @@ cd backend && ./mvnw test
 | `leave_request` | 休暇申請テーブル（current_node_id + timeout_time でフローを駆動） |
 | `approval_record` | 承認記録テーブル |
 | `approval_task` | 並行承認タスクテーブル |
+| `account` | 勘定科目テーブル（10件のシードデータ） |
+| `journal_entry` | 仕訳テーブル（複式簿記コア、楽観ロック付き） |
+| `expense_request` | 経費精算申請テーブル（楽観ロック付き） |
+| `expense_approval_task` | 経費承認並行タスクテーブル |
+| `audit_log` | 監監査ログテーブル（追加のみ、更新・削除不可） |
 
 ---
 
@@ -197,9 +206,19 @@ pnpm run dev
 - [x] **タイムアウト自動エスカレーション** — ESCALATE / AUTO_APPROVE / AUTO_REJECT、`@Scheduled` で5分ごとにチェック
 - [x] **滞留修復** — `repairStuckRequests()` で `currentApproverId` が null の異常滞留申請を修復
 
-### テスト
+### P6 経費精算 + 複式簿記
 
-- [x] **ユニットテスト** — JUnit 5 + Spring Boot Test、24件のテストケース
+- [x] **複式簿記エンジン** — 各経費精算が自動的に借方・貸方の仕訳を生成（SUM(debit) == SUM(credit) を保証）
+- [x] **BigDecimal 精度制御** — DECIMAL(19,2)、`setScale(2, HALF_UP)`、金額に double/float を使用しない
+- [x] **楽観ロック** — `@Version` アノテーション + `OptimisticLockerInnerInterceptor`（同時承認の競合を防止）
+- [x] **状態マシン** — DRAFT → PENDING → APPROVED → POSTED（記帳後は変更不可、赤字消し戻しのみ）
+- [x] **赤字消し戻し** — 原仕訳の借方・貸方を入れ替えた反対仕訳を生成（`memo="消込#元取引ID"`）
+- [x] **監査ログ** — 追加のみ（UPDATE / DELETE 不可）、全操作を記録（SUBMIT / APPROVE / REJECT / WITHDRAW / POST / REVERSE）
+- [x] **承認フロー共通化** — `approval_node` テーブルを共用し、経費用に独立した `expense_approval_task` を使用
+- [x] **SpEL 条件分岐** — `ExpenseConditionVars(amount, category)` で金額・カテゴリ条件をサポート
+- [x] **記帳自動化** — 承認完了時に `AccountingService.post()` を自動呼び出し、仕訳を生成
+
+### テスト
 - [x] **承認フローテスト** — 申請提出、承認、却下、取下げ、転送、照会を網羅
 - [x] **異常系テスト** — 権限超越、重複操作、不正パラメータの検証
 - [x] **データ整合性** — `@Transactional` によるテスト後の自動ロールバック
@@ -229,6 +248,17 @@ pnpm run dev
 | POST | `/api/leave/repair` | 滞留修復 |
 | GET | `/api/stats/summary` | 統計サマリー |
 | GET | `/api/stats/export` | Excel エクスポート |
+| POST | `/api/expense/submit` | 経費精算申請提出 |
+| POST | `/api/expense/approve` | 経費承認・却下 |
+| POST | `/api/expense/{id}/withdraw` | 経費取下げ |
+| POST | `/api/expense/{id}/reverse` | 赤字消し戻し（管理者のみ） |
+| GET | `/api/expense/my-expenses` | 自分の経費一覧 |
+| GET | `/api/expense/pending` | 未承認経費一覧 |
+| GET | `/api/expense/all` | 全経費一覧（管理者） |
+| GET | `/api/expense/{id}` | 経費詳細 |
+| GET | `/api/expense/{id}/audit-logs` | 監査ログ |
+| GET | `/api/accounting/trial-balance` | 試算平衡表 |
+| GET | `/api/accounting/balances` | 科目残高一覧 |
 
 ---
 
