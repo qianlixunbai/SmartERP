@@ -1,6 +1,6 @@
 # SmartERP — エンタープライズ ERP システム（OA モジュール v1.0）
 
-エンタープライズ級 ERP システム | OA · Finance · Treasury · Portfolio · Analytics · AI
+エンタープライズ級 ERP システム | HR · OA · Finance · Treasury · Portfolio · AI
 
 <p align="center">
   <img src="https://img.shields.io/badge/Java-21-orange" alt="Java 21"/>
