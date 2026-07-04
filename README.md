@@ -235,3 +235,9 @@ pnpm run dev
 ## 许可证
 
 MIT License
+
+---
+
+## 开发历史
+
+本分支（`github-cn`）为纯中文最终交付版。如需查看完整开发历史（66 个提交，含中日双语文档），请访问 [`github`](https://github.com/qianlixunbai/SmartOA/tree/github) 分支。
