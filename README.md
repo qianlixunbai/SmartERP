@@ -235,3 +235,9 @@ pnpm run dev
 ## ライセンス
 
 MIT License
+
+---
+
+## 開発履歴
+
+このブランチ（`github-jp`）は純日本語の最終納品版です。開発履歴（66コミット、中日バイリンガル文書含む）をご覧になる場合は、[`github`](https://github.com/qianlixunbai/SmartOA/tree/github) ブランチをご参照ください。
