@@ -11,6 +11,8 @@
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License"/>
 </p>
 
+> **SmartERP は、オートメーション・財務核算・資金管理・ポートフォリオ分析を統合したエンタープライズ経営プラットフォームへと継続的に進化しています。**
+
 ---
 
 ## プロジェクト概要
@@ -259,6 +261,21 @@ pnpm run dev
 | GET | `/api/expense/{id}/audit-logs` | 監査ログ |
 | GET | `/api/accounting/trial-balance` | 試算平衡表 |
 | GET | `/api/accounting/balances` | 科目残高一覧 |
+
+---
+
+## ロードマップ
+
+| バージョン | モジュール | 目的 |
+|:---:|------|------|
+| v1.0 ✅ | **OA** | 承認フローと複式簿記の基盤構築 |
+| v2.0 🚧 | **Accounting** | 企業の財務核算と証票管理を実現 |
+| v3.0 📅 | **Treasury** | キャッシュフロー・銀行口座・資金振替を統合管理 |
+| v4.0 📅 | **Portfolio** | 遊休資金の運用を支援し、収益率・リスク分析を提供 |
+| v5.0 📅 | **Analytics** | 全データを BI ダッシュボードに集約 |
+| v6.0 📅 | **AI** | AI による承認支援・財務分析・リスク予測 |
+
+> 詳細は [docs/ROADMAP.md](docs/ROADMAP.md) をご覧ください。
 
 ---
 
