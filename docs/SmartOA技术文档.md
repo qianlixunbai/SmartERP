@@ -629,7 +629,7 @@ jwt.expiration=86400000    ← 24 小时过期（毫秒）
    ```
 
    ```
-   docs/mysql-p4-parallel.sql  — 並行承認（sign_type + approval_task）
+   docs/mysql-p2b-parallel.sql  — 並行承認（sign_type + approval_task）
    ```
 
    ```bash
@@ -649,9 +649,10 @@ jwt.expiration=86400000    ← 24 小时过期（毫秒）
 2. 依次执行迁移脚本：
    ```
    docs/mysql-p0-upgrade.sql   — 建表 + 种子数据
-   docs/mysql-p3-bcrypt.sql    — BCrypt 密码迁移
-   docs/mysql-p4-parallel.sql  — 并行审批（sign_type + approval_task）
-   docs/mysql-p5-timeout.sql   — 超时自动升级
+   docs/mysql-p2a-bcrypt.sql   — BCrypt 密码迁移
+   docs/mysql-p2b-parallel.sql — 并行审批（sign_type + approval_task）
+   docs/mysql-p2c-timeout.sql  — 超时自动升级
+   docs/mysql-p3-expense.sql   — 经费报销+复式记账
    ```
 3. 启动后端：
    ```bash

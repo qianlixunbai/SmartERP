@@ -364,9 +364,10 @@ sys_user (用户)
 |---|---|
 | `docs/mysql-p0-upgrade.sql` | P0 初始化：建库 + 4 表 + 种子数据 |
 | `docs/mysql-p1-upgrade.sql` | P1 升级：approval_node + template_field + 新字段 |
-| `docs/mysql-p3-bcrypt.sql` | BCrypt 密码迁移 |
-| `docs/mysql-p4-parallel.sql` | P2 并行审批：sign_type + approver_ids + approval_task 表 |
-| `docs/mysql-p5-timeout.sql` | P2 超时升级：timeout_hours + timeout_action + escalate_to_user_id + timeout_time |
+| `docs/mysql-p2a-bcrypt.sql` | BCrypt 密码迁移 |
+| `docs/mysql-p2b-parallel.sql` | P2 并行审批：sign_type + approver_ids + approval_task 表 |
+| `docs/mysql-p2c-timeout.sql` | P2 超时升级：timeout_hours + timeout_action + escalate_to_user_id + timeout_time |
+| `docs/mysql-p3-expense.sql` | P3 经费报销+复式记账：account/journal_entry/expense_request/expense_approval_task/audit_log |
 
 ---
 
