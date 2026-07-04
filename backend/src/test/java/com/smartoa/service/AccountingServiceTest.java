@@ -190,6 +190,9 @@ class AccountingServiceTest {
         @Test
         @DisplayName("多笔入账后试算应平衡")
         void testTrialBalance_ShouldBeBalanced() {
+            Map<String, Object> before = accountingService.trialBalance();
+            BigDecimal prevDebit = (BigDecimal) before.get("totalDebit");
+
             accountingService.post(1L, "办公", new BigDecimal("100"), 1L, null);
             accountingService.post(1L, "差旅", new BigDecimal("200"), 1L, null);
             accountingService.post(1L, "招待", new BigDecimal("300"), 1L, null);
@@ -200,7 +203,8 @@ class AccountingServiceTest {
             BigDecimal totalDebit = (BigDecimal) result.get("totalDebit");
             BigDecimal totalCredit = (BigDecimal) result.get("totalCredit");
             assertEquals(0, totalDebit.compareTo(totalCredit));
-            assertEquals(0, new BigDecimal("600.00").compareTo(totalDebit));
+            // 验证新增 600 的借方金额
+            assertEquals(0, new BigDecimal("600.00").compareTo(totalDebit.subtract(prevDebit)));
         }
 
         @Test
