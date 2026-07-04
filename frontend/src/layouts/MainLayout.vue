@@ -5,11 +5,11 @@ import AppSidebar from '@/components/AppSidebar.vue'
 
 <template>
   <el-container class="main-layout">
-    <el-aside width="220px">
+    <el-aside width="240px">
       <AppSidebar />
     </el-aside>
     <el-container>
-      <el-header height="60px">
+      <el-header height="64px">
         <AppHeader />
       </el-header>
       <el-main>
@@ -23,18 +23,31 @@ import AppSidebar from '@/components/AppSidebar.vue'
 .main-layout {
   min-height: 100vh;
 }
+
 .el-aside {
-  background-color: #304156;
+  background: var(--bg-sidebar);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
 }
+
 .el-header {
-  background: #fff;
-  border-bottom: 1px solid #e6e6e6;
+  background: var(--bg-header);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
   display: flex;
   align-items: center;
-  padding: 0 20px;
+  padding: 0 28px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
+
 .el-main {
-  background: #f0f2f5;
-  padding: 20px;
+  background: var(--bg-page);
+  padding: 24px;
+  min-height: calc(100vh - 64px);
 }
 </style>

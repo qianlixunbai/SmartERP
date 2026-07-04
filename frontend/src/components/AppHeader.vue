@@ -1,6 +1,6 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth'
-import { ArrowDown } from '@element-plus/icons-vue'
+import { ArrowDown, User, SwitchButton } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 
 const auth = useAuthStore()
@@ -18,18 +18,30 @@ function handleCommand(cmd) {
 <template>
   <div class="header">
     <div class="header-left">
-      <span class="header-title">SmartOA 审批系统</span>
+      <span class="header-title">审批系统</span>
     </div>
     <div class="header-right">
-      <el-dropdown @command="handleCommand">
-        <span class="user-info">
-          {{ auth.user?.realName }} ({{ auth.user?.department }})
-          <el-icon><ArrowDown /></el-icon>
-        </span>
+      <el-dropdown @command="handleCommand" trigger="click">
+        <div class="user-info">
+          <div class="user-avatar">
+            {{ auth.user?.realName?.charAt(0) || 'U' }}
+          </div>
+          <div class="user-meta">
+            <span class="user-name">{{ auth.user?.realName }}</span>
+            <span class="user-dept">{{ auth.user?.department }}</span>
+          </div>
+          <el-icon class="arrow-icon"><ArrowDown /></el-icon>
+        </div>
         <template #dropdown>
           <el-dropdown-menu>
-            <el-dropdown-item command="profile">个人中心</el-dropdown-item>
-            <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+            <el-dropdown-item command="profile">
+              <el-icon><User /></el-icon>
+              个人中心
+            </el-dropdown-item>
+            <el-dropdown-item command="logout" divided>
+              <el-icon><SwitchButton /></el-icon>
+              退出登录
+            </el-dropdown-item>
           </el-dropdown-menu>
         </template>
       </el-dropdown>
@@ -44,16 +56,65 @@ function handleCommand(cmd) {
   justify-content: space-between;
   align-items: center;
 }
+
 .header-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
-  color: #303133;
+  color: var(--text-primary);
+  letter-spacing: 0.5px;
 }
+
 .user-info {
   cursor: pointer;
-  color: #606266;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 10px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.user-info:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.user-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.user-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.user-dept {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.arrow-icon {
+  color: var(--text-muted);
+  font-size: 12px;
+  transition: transform 0.2s ease;
+}
+
+.user-info:hover .arrow-icon {
+  transform: rotate(180deg);
 }
 </style>
