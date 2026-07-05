@@ -58,7 +58,7 @@ SmartERP
 
 ---
 
-## v2.0 Finance — Accounting（財務核算）
+## v2.0 Finance — Accounting（財務核算）✅ 完了
 
 **目的：** 企業の財務核算ニーズに対応し、複式簿記と証票管理を実現する。
 

@@ -1,4 +1,4 @@
-# SmartERP — エンタープライズ ERP システム（OA モジュール v1.0）
+# SmartERP — エンタープライズ ERP システム（OA + Finance モジュール v2.0）
 
 エンタープライズ級 ERP システム | HR · OA · Finance · Treasury · Portfolio · AI
 
@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/Spring_Boot-3.5.14-brightgreen" alt="Spring Boot 3.5"/>
   <img src="https://img.shields.io/badge/Vue-3-4FC08D" alt="Vue 3"/>
   <img src="https://img.shields.io/badge/MySQL-8.0-blue" alt="MySQL 8"/>
-  <img src="https://img.shields.io/badge/Tests-41_passed-brightgreen" alt="Tests"/>
+  <img src="https://img.shields.io/badge/Tests-52_passed-brightgreen" alt="Tests"/>
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License"/>
 </p>
 
@@ -90,7 +90,7 @@ smarterp/
 
 ## テスト
 
-プロジェクトには **41 件のユニットテスト**が含まれており、承認フロー・経費精算・複式簿記の主要なシナリオをカバーしています。
+プロジェクトには **52 件のユニットテスト**が含まれており、承認フロー・経費精算・複式簿記・月結の主要なシナリオをカバーしています。
 
 ```bash
 # 全テスト実行
@@ -109,6 +109,7 @@ cd backend && ./mvnw test
 |-------------|---------|-----------|
 | LeaveServiceTest | 18 | 承認フロー全操作 |
 | AccountingServiceTest | 11 | 複式簿記（記帳・取消・試算平衡・残高） |
+| FiscalPeriodServiceTest | 11 | 月結・反月結・期間校驗・看板データ |
 | ExpenseServiceTest | 6 | 経費精算（提出・取下げ・却下） |
 | UserServiceTest | 5 | ログイン・ユーザー管理 |
 | SmartERPApplicationTests | 1 | アプリケーション起動 |
@@ -142,6 +143,10 @@ cd backend && ./mvnw test
 | `expense_request` | 経費精算申請テーブル（楽観ロック付き） |
 | `expense_approval_task` | 経費承認並行タスクテーブル |
 | `audit_log` | 監監査ログテーブル（追加のみ、更新・削除不可） |
+| `cost_center` | コストセンターテーブル |
+| `profit_center` | プロフィットセンターテーブル |
+| `fiscal_period` | 会計期間テーブル（OPEN/CLOSED ステータス） |
+| `period_balance` | 月次決算残高スナップショットテーブル |
 
 ---
 
@@ -234,6 +239,15 @@ pnpm run dev
 - [x] **SpEL 条件分岐** — `ExpenseConditionVars(amount, category)` で金額・カテゴリ条件をサポート
 - [x] **記帳自動化** — 承認完了時に `AccountingService.post()` を自動呼び出し、仕訳を生成
 
+### v2.0 財務核算拡張
+
+- [x] **コストセンター** — 経費・仕訳をコストセンターに紐付け、部門別費用集計を実現
+- [x] **プロフィットセンター** — 利益計算のための事業単位マスター
+- [x] **会計期間管理** — OPEN/CLOSED ステータス制御、月次決算で残高スナップショット生成
+- [x] **月次決算（月結）** — 期末残高を `period_balance` に保存、期間ロックで改ざん防止
+- [x] **反月次決算（反月結）** — 期間を再オープンし、スナップショットを削除
+- [x] **財務ダッシュボード** — 期間・コストセンター・プロフィットセンター別データ集計
+
 ### テスト
 - [x] **承認フローテスト** — 申請提出、承認、却下、取下げ、転送、照会を網羅
 - [x] **異常系テスト** — 権限超越、重複操作、不正パラメータの検証
@@ -275,6 +289,17 @@ pnpm run dev
 | GET | `/api/expense/{id}/audit-logs` | 監査ログ |
 | GET | `/api/accounting/trial-balance` | 試算平衡表 |
 | GET | `/api/accounting/balances` | 科目残高一覧 |
+| GET | `/api/accounting/cost-centers` | コストセンター一覧 |
+| POST | `/api/accounting/cost-centers` | コストセンター作成 |
+| PUT | `/api/accounting/cost-centers/{id}` | コストセンター編集 |
+| GET | `/api/accounting/profit-centers` | プロフィットセンター一覧 |
+| POST | `/api/accounting/profit-centers` | プロフィットセンター作成 |
+| PUT | `/api/accounting/profit-centers/{id}` | プロフィットセンター編集 |
+| GET | `/api/accounting/periods` | 会計期間一覧 |
+| POST | `/api/accounting/periods/close` | 月次決算 |
+| POST | `/api/accounting/periods/reopen` | 反月次決算 |
+| GET | `/api/accounting/period-balances/{periodId}` | 期間残高スナップショット |
+| GET | `/api/accounting/dashboard` | 財務ダッシュボード |
 
 ---
 
@@ -283,7 +308,7 @@ pnpm run dev
 | バージョン | モジュール | 目的 |
 |:---:|------|------|
 | v1.0 ✅ | **OA** | 承認フローと複式簿記の基盤構築 |
-| v2.0 🚧 | **Accounting** | 企業の財務核算と証票管理を実現 |
+| v2.0 ✅ | **Accounting** | 企業の財務核算と証票管理を実現 |
 | v3.0 📅 | **Treasury** | キャッシュフロー・銀行口座・資金振替を統合管理 |
 | v4.0 📅 | **Portfolio** | 遊休資金の運用を支援し、収益率・リスク分析を提供 |
 | v5.0 📅 | **Analytics** | 全データを BI ダッシュボードに集約 |

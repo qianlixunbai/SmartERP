@@ -8,8 +8,8 @@ import com.smartoa.entity.JournalEntry;
 import com.smartoa.mapper.AccountMapper;
 import com.smartoa.mapper.AuditLogMapper;
 import com.smartoa.mapper.JournalEntryMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,12 +23,22 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class AccountingService {
 
     private final JournalEntryMapper journalEntryMapper;
     private final AccountMapper accountMapper;
     private final AuditLogMapper auditLogMapper;
+    private final FiscalPeriodService fiscalPeriodService;
+
+    public AccountingService(JournalEntryMapper journalEntryMapper,
+                             AccountMapper accountMapper,
+                             AuditLogMapper auditLogMapper,
+                             @Lazy FiscalPeriodService fiscalPeriodService) {
+        this.journalEntryMapper = journalEntryMapper;
+        this.accountMapper = accountMapper;
+        this.auditLogMapper = auditLogMapper;
+        this.fiscalPeriodService = fiscalPeriodService;
+    }
 
     /**
      * 经费入账 — 复式记账
@@ -39,11 +49,16 @@ public class AccountingService {
      */
     @Transactional
     public String post(Long expenseRequestId, String category, BigDecimal amount,
-                       Long operatorId, String memo) {
+                       Long operatorId, String memo,
+                       Long costCenterId, Long profitCenterId) {
         BigDecimal amt = amount.setScale(2, RoundingMode.HALF_UP);
         if (amt.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BusinessException("入账金额必须大于0");
         }
+
+        // 检查财务期间是否打开
+        LocalDateTime now = LocalDateTime.now();
+        fiscalPeriodService.checkPeriodOpen(now.getYear(), now.getMonthValue());
 
         // 查费用科目
         String expenseCode = mapCategoryToCode(category);
@@ -61,7 +76,6 @@ public class AccountingService {
         }
 
         String txnId = UUID.randomUUID().toString();
-        LocalDateTime now = LocalDateTime.now();
 
         // 借：费用科目
         JournalEntry debit = new JournalEntry();
@@ -70,6 +84,8 @@ public class AccountingService {
         debit.setDebit(amt);
         debit.setCredit(BigDecimal.ZERO.setScale(2));
         debit.setMemo(memo != null ? memo : "经费报销-" + category);
+        debit.setCostCenterId(costCenterId);
+        debit.setProfitCenterId(profitCenterId);
         debit.setCreatedBy(operatorId);
         debit.setCreateTime(now);
         journalEntryMapper.insert(debit);
@@ -81,6 +97,8 @@ public class AccountingService {
         credit.setDebit(BigDecimal.ZERO.setScale(2));
         credit.setCredit(amt);
         credit.setMemo(memo != null ? memo : "经费报销-" + category);
+        credit.setCostCenterId(costCenterId);
+        credit.setProfitCenterId(profitCenterId);
         credit.setCreatedBy(operatorId);
         credit.setCreateTime(now);
         journalEntryMapper.insert(credit);

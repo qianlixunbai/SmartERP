@@ -127,6 +127,30 @@ const routes = [
     meta: { title: '试算平衡', requiresAuth: true, role: 'MANAGER' }
   },
   {
+    path: '/accounting/cost-centers',
+    name: 'CostCenters',
+    component: () => import('@/views/CostCenterPage.vue'),
+    meta: { title: '成本中心', requiresAuth: true, role: 'MANAGER' }
+  },
+  {
+    path: '/accounting/profit-centers',
+    name: 'ProfitCenters',
+    component: () => import('@/views/ProfitCenterPage.vue'),
+    meta: { title: '利润中心', requiresAuth: true, role: 'MANAGER' }
+  },
+  {
+    path: '/accounting/periods',
+    name: 'FiscalPeriods',
+    component: () => import('@/views/FiscalPeriodPage.vue'),
+    meta: { title: '财务期间', requiresAuth: true, role: 'MANAGER' }
+  },
+  {
+    path: '/accounting/dashboard',
+    name: 'AccountingDashboard',
+    component: () => import('@/views/AccountingDashboardPage.vue'),
+    meta: { title: '财务看板', requiresAuth: true, role: 'MANAGER' }
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('@/views/NotFoundPage.vue'),

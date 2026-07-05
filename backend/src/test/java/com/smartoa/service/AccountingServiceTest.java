@@ -44,7 +44,7 @@ class AccountingServiceTest {
         @DisplayName("正常入账 - 应生成借贷两条分录")
         void testPost_ShouldCreateTwoEntries() {
             String txnId = accountingService.post(
-                    1L, "办公", new BigDecimal("500.00"), 1L, "测试入账");
+                    1L, "办公", new BigDecimal("500.00"), 1L, "测试入账", null, null);
 
             assertNotNull(txnId);
 
@@ -69,7 +69,7 @@ class AccountingServiceTest {
         @DisplayName("金额精度 - 应保留两位小数")
         void testPost_ShouldScaleToTwoDecimal() {
             String txnId = accountingService.post(
-                    1L, "差旅", new BigDecimal("1234.567"), 1L, "精度测试");
+                    1L, "差旅", new BigDecimal("1234.567"), 1L, "精度测试", null, null);
 
             List<JournalEntry> entries = journalEntryMapper.selectList(
                     new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<JournalEntry>()
@@ -87,21 +87,21 @@ class AccountingServiceTest {
         @DisplayName("零金额入账 - 应抛出异常")
         void testPost_ZeroAmount_ShouldThrow() {
             assertThrows(BusinessException.class, () ->
-                    accountingService.post(1L, "办公", BigDecimal.ZERO, 1L, "零金额"));
+                    accountingService.post(1L, "办公", BigDecimal.ZERO, 1L, "零金额", null, null));
         }
 
         @Test
         @DisplayName("负金额入账 - 应抛出异常")
         void testPost_NegativeAmount_ShouldThrow() {
             assertThrows(BusinessException.class, () ->
-                    accountingService.post(1L, "办公", new BigDecimal("-100"), 1L, "负金额"));
+                    accountingService.post(1L, "办公", new BigDecimal("-100"), 1L, "负金额", null, null));
         }
 
         @Test
         @DisplayName("不同费用类别 - 应使用不同科目")
         void testPost_DifferentCategories_ShouldUseDifferentAccounts() {
-            String txn1 = accountingService.post(1L, "办公", new BigDecimal("100"), 1L, null);
-            String txn2 = accountingService.post(1L, "差旅", new BigDecimal("200"), 1L, null);
+            String txn1 = accountingService.post(1L, "办公", new BigDecimal("100"), 1L, null, null, null);
+            String txn2 = accountingService.post(1L, "差旅", new BigDecimal("200"), 1L, null, null, null);
 
             List<JournalEntry> entries1 = journalEntryMapper.selectList(
                     new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<JournalEntry>()
@@ -132,7 +132,7 @@ class AccountingServiceTest {
         @DisplayName("正常冲销 - 应生成借贷互换的反向分录")
         void testReverse_ShouldCreateReversalEntries() {
             String originalTxn = accountingService.post(
-                    1L, "办公", new BigDecimal("300.00"), 1L, "原始入账");
+                    1L, "办公", new BigDecimal("300.00"), 1L, "原始入账", null, null);
 
             String reversalTxn = accountingService.reverse(
                     originalTxn, 1L, "测试冲销");
@@ -166,7 +166,7 @@ class AccountingServiceTest {
         @DisplayName("重复冲销 - 应抛出异常")
         void testReverse_AlreadyReversed_ShouldThrow() {
             String txnId = accountingService.post(
-                    1L, "办公", new BigDecimal("100"), 1L, null);
+                    1L, "办公", new BigDecimal("100"), 1L, null, null, null);
             accountingService.reverse(txnId, 1L, "第一次冲销");
 
             assertThrows(BusinessException.class, () ->
@@ -193,9 +193,9 @@ class AccountingServiceTest {
             Map<String, Object> before = accountingService.trialBalance();
             BigDecimal prevDebit = (BigDecimal) before.get("totalDebit");
 
-            accountingService.post(1L, "办公", new BigDecimal("100"), 1L, null);
-            accountingService.post(1L, "差旅", new BigDecimal("200"), 1L, null);
-            accountingService.post(1L, "招待", new BigDecimal("300"), 1L, null);
+            accountingService.post(1L, "办公", new BigDecimal("100"), 1L, null, null, null);
+            accountingService.post(1L, "差旅", new BigDecimal("200"), 1L, null, null, null);
+            accountingService.post(1L, "招待", new BigDecimal("300"), 1L, null, null, null);
 
             Map<String, Object> result = accountingService.trialBalance();
 
@@ -211,7 +211,7 @@ class AccountingServiceTest {
         @DisplayName("入账+冲销后试算应平衡")
         void testTrialBalance_AfterReversal_ShouldBeBalanced() {
             String txnId = accountingService.post(
-                    1L, "办公", new BigDecimal("500"), 1L, null);
+                    1L, "办公", new BigDecimal("500"), 1L, null, null, null);
             accountingService.reverse(txnId, 1L, "冲销");
 
             Map<String, Object> result = accountingService.trialBalance();
@@ -230,7 +230,7 @@ class AccountingServiceTest {
         @Test
         @DisplayName("入账后科目余额应正确计算")
         void testAccountBalances_ShouldCalculateCorrectly() {
-            accountingService.post(1L, "办公", new BigDecimal("200"), 1L, null);
+            accountingService.post(1L, "办公", new BigDecimal("200"), 1L, null, null, null);
 
             List<Map<String, Object>> balances = accountingService.accountBalances();
 
