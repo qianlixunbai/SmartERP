@@ -145,6 +145,30 @@ const routes = [
     meta: { title: '财务期间', requiresAuth: true, role: 'MANAGER' }
   },
   {
+    path: '/portfolio/manage',
+    name: 'PortfolioManage',
+    component: () => import('@/views/PortfolioPage.vue'),
+    meta: { title: '组合管理', requiresAuth: true, role: 'MANAGER' }
+  },
+  {
+    path: '/portfolio/holdings',
+    name: 'PortfolioHoldings',
+    component: () => import('@/views/HoldingsPage.vue'),
+    meta: { title: '持仓明细', requiresAuth: true }
+  },
+  {
+    path: '/portfolio/trades',
+    name: 'PortfolioTrades',
+    component: () => import('@/views/TradeHistoryPage.vue'),
+    meta: { title: '交易记录', requiresAuth: true }
+  },
+  {
+    path: '/portfolio/dashboard',
+    name: 'PortfolioDashboard',
+    component: () => import('@/views/PortfolioDashboardPage.vue'),
+    meta: { title: '投资看板', requiresAuth: true }
+  },
+  {
     path: '/accounting/dashboard',
     name: 'AccountingDashboard',
     component: () => import('@/views/AccountingDashboardPage.vue'),

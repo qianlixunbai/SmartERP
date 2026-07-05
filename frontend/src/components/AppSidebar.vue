@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { DocumentAdd, List, Setting, Plus, DataAnalysis, Download, HomeFilled, Clock, Files, Avatar, Money, WalletFilled, Coin } from '@element-plus/icons-vue'
+import { DocumentAdd, List, Setting, Plus, DataAnalysis, Download, HomeFilled, Clock, Files, Avatar, Money, WalletFilled, Coin, TrendCharts } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const auth = useAuthStore()
@@ -62,6 +62,29 @@ const menuItems = [
         <el-menu-item index="/expense/pending">
           <el-icon><Clock /></el-icon>
           <span>待审批经费</span>
+        </el-menu-item>
+      </el-sub-menu>
+
+      <el-sub-menu index="/portfolio-group" class="sub-menu">
+        <template #title>
+          <el-icon><TrendCharts /></el-icon>
+          <span>投资组合</span>
+        </template>
+        <el-menu-item index="/portfolio/manage">
+          <el-icon><Setting /></el-icon>
+          <span>组合管理</span>
+        </el-menu-item>
+        <el-menu-item index="/portfolio/holdings">
+          <el-icon><Coin /></el-icon>
+          <span>持仓明细</span>
+        </el-menu-item>
+        <el-menu-item index="/portfolio/trades">
+          <el-icon><List /></el-icon>
+          <span>交易记录</span>
+        </el-menu-item>
+        <el-menu-item index="/portfolio/dashboard">
+          <el-icon><DataAnalysis /></el-icon>
+          <span>投资看板</span>
         </el-menu-item>
       </el-sub-menu>
 
@@ -128,7 +151,7 @@ const menuItems = [
     </el-menu>
 
     <div class="sidebar-footer">
-      <div class="version-badge">v2.0</div>
+      <div class="version-badge">v4.0</div>
     </div>
   </div>
 </template>

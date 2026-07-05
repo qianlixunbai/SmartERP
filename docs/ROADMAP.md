@@ -91,7 +91,7 @@ SmartERP
 
 ---
 
-## v4.0 Finance — Portfolio（投资组合管理）
+## v4.0 Finance — Portfolio（投资组合管理）✅ 已完成
 
 **目的：** 帮助企业管理闲置资金投资，提供收益率、风险分析及资产配置能力。
 

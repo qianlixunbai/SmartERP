@@ -1,4 +1,4 @@
-# SmartERP — 企业级 ERP 系统（OA + Finance 模块 v2.0）
+# SmartERP — 企业级 ERP 系统（OA + Finance + Portfolio 模块 v4.0）
 
 企业级 ERP 系统 | HR · OA · Finance · Treasury · Portfolio · AI
 
@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/Spring_Boot-3.5.14-brightgreen" alt="Spring Boot 3.5"/>
   <img src="https://img.shields.io/badge/Vue-3-4FC08D" alt="Vue 3"/>
   <img src="https://img.shields.io/badge/MySQL-8.0-blue" alt="MySQL 8"/>
-  <img src="https://img.shields.io/badge/Tests-52_passed-brightgreen" alt="Tests"/>
+  <img src="https://img.shields.io/badge/Tests-63_passed-brightgreen" alt="Tests"/>
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License"/>
 </p>
 
@@ -61,11 +61,11 @@ smarterp/
 │   ├── src/main/java/com/smarterp/
 │   │   ├── common/              # Result<T> 统一响应、BusinessException、GlobalExceptionHandler
 │   │   ├── config/              # 安全配置、CORS、JWT 过滤器、乐观锁插件
-│   │   ├── controller/          # REST 控制器（6 个）
+│   │   ├── controller/          # REST 控制器（7 个）
 │   │   ├── dto/                 # 数据传输对象
-│   │   ├── entity/              # 实体类（11 个）
-│   │   ├── mapper/              # MyBatis-Plus Mapper（11 个）
-│   │   └── service/             # 业务逻辑层（6 个）+ TimeoutScheduler
+│   │   ├── entity/              # 实体类（16 个）
+│   │   ├── mapper/              # MyBatis-Plus Mapper（16 个）
+│   │   └── service/             # 业务逻辑层（7 个）+ TimeoutScheduler
 │   ├── src/test/java/com/smarterp/service/
 │   │   ├── LeaveServiceTest.java       # 审批流程测试（18 个用例）
 │   │   ├── AccountingServiceTest.java  # 复式记账测试（11 个用例）
@@ -92,7 +92,7 @@ smarterp/
 
 ## 测试
 
-项目包含 **52 个单元测试**，覆盖审批流程、经费报销、复式记账的核心场景。
+项目包含 **63 个单元测试**，覆盖审批流程、经费报销、复式记账、投资组合的核心场景。
 
 ```bash
 # 运行所有测试
@@ -112,6 +112,7 @@ cd backend && ./mvnw test
 | LeaveServiceTest | 18 | 审批流程全部操作 |
 | AccountingServiceTest | 11 | 复式记账（入账/冲销/试算平衡/科目余额） |
 | FiscalPeriodServiceTest | 11 | 月结/反月结/期间校验/看板数据 |
+| PortfolioServiceTest | 11 | 投资组合（交易/持仓/绩效/配置/看板） |
 | ExpenseServiceTest | 6 | 经费报销（提交/撤回/驳回） |
 | UserServiceTest | 5 | 登录与用户管理 |
 | SmartERPApplicationTests | 1 | 应用启动 |
@@ -131,7 +132,7 @@ cd backend && ./mvnw test
 
 ## 数据库设计
 
-共 12 张表：
+共 21 张表：
 
 | 表名 | 说明 |
 |------|------|
@@ -151,6 +152,11 @@ cd backend && ./mvnw test
 | `profit_center` | 利润中心表 |
 | `fiscal_period` | 财务期间表（OPEN/CLOSED 状态） |
 | `period_balance` | 月结余额快照表 |
+| `portfolio` | 投资组合表 |
+| `portfolio_asset` | 资产标的表（ETF/股票/债券/现金） |
+| `portfolio_holding` | 持仓表（加权平均成本） |
+| `portfolio_trade` | 交易记录表（BUY/SELL） |
+| `portfolio_dividend` | 股息记录表 |
 
 ---
 
@@ -177,6 +183,8 @@ mysql -u root -p123456 --default-character-set=utf8mb4 smarterp < docs/mysql-p2a
 mysql -u root -p123456 --default-character-set=utf8mb4 smarterp < docs/mysql-p2b-parallel.sql
 mysql -u root -p123456 --default-character-set=utf8mb4 smarterp < docs/mysql-p2c-timeout.sql
 mysql -u root -p123456 --default-character-set=utf8mb4 smarterp < docs/mysql-p3-expense.sql
+mysql -u root -p123456 --default-character-set=utf8mb4 smarterp < docs/mysql-p7-accounting.sql
+mysql -u root -p123456 --default-character-set=utf8mb4 smarterp < docs/mysql-p8-portfolio.sql
 ```
 
 ### 2. 启动后端
@@ -260,6 +268,18 @@ pnpm run dev
 - [x] **反月结** — 重新打开期间，删除快照
 - [x] **财务看板** — 按期间/成本中心/利润中心维度汇总
 
+### v4.0 投资组合管理
+
+- [x] **Investment Portfolio** — 多组合管理（USD/JPY/CNY 基准币种）
+- [x] **资产标的管理** — ETF/股票/债券/现金，手动更新价格
+- [x] **交易执行** — BUY/SELL，加权平均成本自动更新持仓
+- [x] **持仓汇总** — 市值/浮动盈亏/盈亏百分比/资产占比
+- [x] **股息管理** — 记录股息收入（每份股息/持有数量/总金额）
+- [x] **资产配置** — ECharts 饼图可视化
+- [x] **组合绩效** — 总收益率/年化收益率/最大回撤/夏普比率/波动率
+- [x] **投资看板** — 统计卡片 + 绩效指标 + 资产配置饼图 + 持仓明细
+- [x] **演示数据** — QQQM / VOO / VTI（对接真实投资组合）
+
 ### 单元测试
 
 - [x] **41 个测试用例** — JUnit 5 + Spring Boot Test
@@ -325,7 +345,7 @@ pnpm run dev
 | v1.0 ✅ | **OA** | 验证审批流程引擎，建立复式记账基础 |
 | v2.0 ✅ | **Accounting** | 解决企业财务核算，实现凭证与科目管理 |
 | v3.0 📅 | **Treasury** | 统一管理现金流、银行账户和资金调拨 |
-| v4.0 📅 | **Portfolio** | 管理闲置资金投资，提供收益率与风险分析 |
+| v4.0 ✅ | **Portfolio** | 管理闲置资金投资，提供收益率与风险分析 |
 | v5.0 📅 | **Analytics** | 全数据汇总至 BI 可视化看板 |
 | v6.0 📅 | **AI** | AI 辅助审批建议、财务分析与风险预测 |
 
