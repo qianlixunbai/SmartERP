@@ -3,17 +3,20 @@ import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useExpenseStore } from '@/stores/expense'
 import { useUserStore } from '@/stores/users'
+import { useAccountingStore } from '@/stores/accounting'
 import { EXPENSE_CATEGORIES } from '@/utils/constants'
 import StatusTag from '@/components/StatusTag.vue'
 
 const store = useExpenseStore()
 const userStore = useUserStore()
+const accountingStore = useAccountingStore()
 
 const formRef = ref(null)
 const submitting = ref(false)
 
 const form = ref({
   category: '',
+  costCenterId: null,
   amount: null,
   description: '',
   receiptUrl: ''
@@ -32,7 +35,7 @@ async function handleSubmit() {
   try {
     await store.submitExpense(form.value)
     ElMessage.success('提交成功')
-    form.value = { category: '', amount: null, description: '', receiptUrl: '' }
+    form.value = { category: '', costCenterId: null, amount: null, description: '', receiptUrl: '' }
   } catch {
   } finally {
     submitting.value = false
@@ -49,6 +52,7 @@ function formatDate(dateStr) {
 onMounted(async () => {
   await userStore.fetchUsers()
   await store.fetchMyExpenses()
+  await accountingStore.fetchCostCenters()
 })
 </script>
 
@@ -61,6 +65,11 @@ onMounted(async () => {
             <el-form-item label="费用类别" prop="category">
               <el-select v-model="form.category" placeholder="请选择" class="w-full">
                 <el-option v-for="c in EXPENSE_CATEGORIES" :key="c.value" :label="c.label" :value="c.value" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="成本中心">
+              <el-select v-model="form.costCenterId" placeholder="选择成本中心" clearable class="w-full">
+                <el-option v-for="cc in accountingStore.costCenters" :key="cc.id" :label="`${cc.code} - ${cc.name}`" :value="cc.id" />
               </el-select>
             </el-form-item>
             <el-form-item label="金额" prop="amount">

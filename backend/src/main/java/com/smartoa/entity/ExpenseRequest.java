@@ -27,6 +27,9 @@ public class ExpenseRequest {
     @TableField("category")
     private String category;
 
+    @TableField("cost_center_id")
+    private Long costCenterId;
+
     @TableField("amount")
     private BigDecimal amount;
 

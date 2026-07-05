@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 public class ExpenseSubmitRequest {
     private Long templateId;
     private String category;
+    private Long costCenterId;
     private BigDecimal amount;
     private String description;
     private String receiptUrl;

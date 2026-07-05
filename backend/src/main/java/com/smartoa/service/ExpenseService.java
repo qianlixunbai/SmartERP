@@ -45,6 +45,7 @@ public class ExpenseService {
         ExpenseRequest request = new ExpenseRequest();
         request.setApplicantId(applicantId);
         request.setCategory(dto.getCategory());
+        request.setCostCenterId(dto.getCostCenterId());
         request.setAmount(dto.getAmount());
         request.setDescription(dto.getDescription());
         request.setReceiptUrl(dto.getReceiptUrl());
@@ -178,7 +179,9 @@ public class ExpenseService {
                     request.getCategory(),
                     request.getAmount(),
                     request.getApplicantId(),
-                    "经费报销自动入账 #" + request.getId());
+                    "经费报销自动入账 #" + request.getId(),
+                    request.getCostCenterId(),
+                    null);
             request.setTransactionId(txnId);
             request.setStatus("POSTED");
             log.info("经费申请#{} 审批通过，自动入账 txnId={}", request.getId(), txnId);

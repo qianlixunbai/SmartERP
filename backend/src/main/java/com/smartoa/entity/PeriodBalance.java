@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.annotation.Version;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,26 +14,17 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("journal_entry")
-public class JournalEntry {
+@TableName("period_balance")
+public class PeriodBalance {
 
     @TableId(type = IdType.AUTO)
     private Long id;
 
-    @TableField("transaction_id")
-    private String transactionId;
+    @TableField("period_id")
+    private Long periodId;
 
     @TableField("account_id")
     private Long accountId;
-
-    @TableField("debit")
-    private BigDecimal debit;
-
-    @TableField("credit")
-    private BigDecimal credit;
-
-    @TableField("memo")
-    private String memo;
 
     @TableField("cost_center_id")
     private Long costCenterId;
@@ -42,13 +32,15 @@ public class JournalEntry {
     @TableField("profit_center_id")
     private Long profitCenterId;
 
-    @TableField("created_by")
-    private Long createdBy;
+    @TableField("debit_total")
+    private BigDecimal debitTotal;
+
+    @TableField("credit_total")
+    private BigDecimal creditTotal;
+
+    @TableField("closing_balance")
+    private BigDecimal closingBalance;
 
     @TableField("create_time")
     private LocalDateTime createTime;
-
-    @Version
-    @TableField("version")
-    private Integer version;
 }

@@ -58,7 +58,7 @@ SmartERP
 
 ---
 
-## v2.0 Finance — Accounting（财务核算）
+## v2.0 Finance — Accounting（财务核算）✅ 已完成
 
 **目的：** 解决企业财务核算问题，实现复式记账与凭证管理。
 

@@ -78,6 +78,22 @@ const menuItems = [
           <el-icon><DataAnalysis /></el-icon>
           <span>试算平衡</span>
         </el-menu-item>
+        <el-menu-item index="/accounting/cost-centers">
+          <el-icon><Coin /></el-icon>
+          <span>成本中心</span>
+        </el-menu-item>
+        <el-menu-item index="/accounting/profit-centers">
+          <el-icon><Money /></el-icon>
+          <span>利润中心</span>
+        </el-menu-item>
+        <el-menu-item index="/accounting/periods">
+          <el-icon><Clock /></el-icon>
+          <span>财务期间</span>
+        </el-menu-item>
+        <el-menu-item index="/accounting/dashboard">
+          <el-icon><DataAnalysis /></el-icon>
+          <span>财务看板</span>
+        </el-menu-item>
       </el-sub-menu>
 
       <el-sub-menu v-if="auth.isManager" index="/templates-group" class="sub-menu">
@@ -112,7 +128,7 @@ const menuItems = [
     </el-menu>
 
     <div class="sidebar-footer">
-      <div class="version-badge">v1.0</div>
+      <div class="version-badge">v2.0</div>
     </div>
   </div>
 </template>

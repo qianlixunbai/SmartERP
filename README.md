@@ -1,4 +1,4 @@
-# SmartERP — 企业级 ERP 系统（OA 模块 v1.0）
+# SmartERP — 企业级 ERP 系统（OA + Finance 模块 v2.0）
 
 企业级 ERP 系统 | HR · OA · Finance · Treasury · Portfolio · AI
 
@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/Spring_Boot-3.5.14-brightgreen" alt="Spring Boot 3.5"/>
   <img src="https://img.shields.io/badge/Vue-3-4FC08D" alt="Vue 3"/>
   <img src="https://img.shields.io/badge/MySQL-8.0-blue" alt="MySQL 8"/>
-  <img src="https://img.shields.io/badge/Tests-41_passed-brightgreen" alt="Tests"/>
+  <img src="https://img.shields.io/badge/Tests-52_passed-brightgreen" alt="Tests"/>
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License"/>
 </p>
 
@@ -92,7 +92,7 @@ smarterp/
 
 ## 测试
 
-项目包含 **41 个单元测试**，覆盖审批流程、经费报销、复式记账的核心场景。
+项目包含 **52 个单元测试**，覆盖审批流程、经费报销、复式记账的核心场景。
 
 ```bash
 # 运行所有测试
@@ -111,6 +111,7 @@ cd backend && ./mvnw test
 |--------|--------|---------|
 | LeaveServiceTest | 18 | 审批流程全部操作 |
 | AccountingServiceTest | 11 | 复式记账（入账/冲销/试算平衡/科目余额） |
+| FiscalPeriodServiceTest | 11 | 月结/反月结/期间校验/看板数据 |
 | ExpenseServiceTest | 6 | 经费报销（提交/撤回/驳回） |
 | UserServiceTest | 5 | 登录与用户管理 |
 | SmartERPApplicationTests | 1 | 应用启动 |
@@ -146,6 +147,10 @@ cd backend && ./mvnw test
 | `expense_request` | 经费报销申请表（含乐观锁） |
 | `expense_approval_task` | 经费审批并行任务表 |
 | `audit_log` | 审计日志表（只追加，不可修改/删除） |
+| `cost_center` | 成本中心表 |
+| `profit_center` | 利润中心表 |
+| `fiscal_period` | 财务期间表（OPEN/CLOSED 状态） |
+| `period_balance` | 月结余额快照表 |
 
 ---
 
@@ -246,6 +251,15 @@ pnpm run dev
 - [x] **SpEL 条件分支** — `ExpenseConditionVars(amount, category)` 支持金额/类别条件路由
 - [x] **入账自动化** — 审批通过时自动调用 `AccountingService.post()` 生成分录
 
+### v2.0 财务核算扩展
+
+- [x] **成本中心** — 经费/凭证关联成本中心，部门费用归集
+- [x] **利润中心** — 利润核算的业务单元
+- [x] **财务期间管理** — OPEN/CLOSED 状态控制，月结锁定
+- [x] **月结** — 期末余额快照到 `period_balance`，防篡改
+- [x] **反月结** — 重新打开期间，删除快照
+- [x] **财务看板** — 按期间/成本中心/利润中心维度汇总
+
 ### 单元测试
 
 - [x] **41 个测试用例** — JUnit 5 + Spring Boot Test
@@ -290,6 +304,17 @@ pnpm run dev
 | GET | `/api/expense/{id}/audit-logs` | 审计日志 |
 | GET | `/api/accounting/trial-balance` | 试算平衡表 |
 | GET | `/api/accounting/balances` | 科目余额表 |
+| GET | `/api/accounting/cost-centers` | 成本中心列表 |
+| POST | `/api/accounting/cost-centers` | 创建成本中心 |
+| PUT | `/api/accounting/cost-centers/{id}` | 编辑成本中心 |
+| GET | `/api/accounting/profit-centers` | 利润中心列表 |
+| POST | `/api/accounting/profit-centers` | 创建利润中心 |
+| PUT | `/api/accounting/profit-centers/{id}` | 编辑利润中心 |
+| GET | `/api/accounting/periods` | 财务期间列表 |
+| POST | `/api/accounting/periods/close` | 月结 |
+| POST | `/api/accounting/periods/reopen` | 反月结 |
+| GET | `/api/accounting/period-balances/{periodId}` | 期间余额快照 |
+| GET | `/api/accounting/dashboard` | 财务看板数据 |
 
 ---
 
@@ -298,7 +323,7 @@ pnpm run dev
 | 版本 | 模块 | 目的 |
 |:---:|------|------|
 | v1.0 ✅ | **OA** | 验证审批流程引擎，建立复式记账基础 |
-| v2.0 🚧 | **Accounting** | 解决企业财务核算，实现凭证与科目管理 |
+| v2.0 ✅ | **Accounting** | 解决企业财务核算，实现凭证与科目管理 |
 | v3.0 📅 | **Treasury** | 统一管理现金流、银行账户和资金调拨 |
 | v4.0 📅 | **Portfolio** | 管理闲置资金投资，提供收益率与风险分析 |
 | v5.0 📅 | **Analytics** | 全数据汇总至 BI 可视化看板 |
