@@ -1,4 +1,4 @@
-# SmartERP — エンタープライズ ERP システム（OA + Finance モジュール v2.0）
+# SmartERP — エンタープライズ ERP システム（OA + Finance + Portfolio モジュール v4.0）
 
 エンタープライズ級 ERP システム | HR · OA · Finance · Treasury · Portfolio · AI
 
@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/Spring_Boot-3.5.14-brightgreen" alt="Spring Boot 3.5"/>
   <img src="https://img.shields.io/badge/Vue-3-4FC08D" alt="Vue 3"/>
   <img src="https://img.shields.io/badge/MySQL-8.0-blue" alt="MySQL 8"/>
-  <img src="https://img.shields.io/badge/Tests-52_passed-brightgreen" alt="Tests"/>
+  <img src="https://img.shields.io/badge/Tests-63_passed-brightgreen" alt="Tests"/>
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License"/>
 </p>
 
@@ -61,11 +61,11 @@ smarterp/
 │   ├── src/main/java/com/smarterp/
 │   │   ├── common/              # Result<T>、BusinessException、GlobalExceptionHandler
 │   │   ├── config/              # セキュリティ設定、CORS、JWT フィルター、楽観ロック
-│   │   ├── controller/          # REST コントローラー（6つ）
+│   │   ├── controller/          # REST コントローラー（7つ）
 │   │   ├── dto/                 # データ転送オブジェクト
-│   │   ├── entity/              # エンティティクラス（11つ）
-│   │   ├── mapper/              # MyBatis-Plus Mapper（11つ）
-│   │   └── service/             # ビジネスロジック層（6つ）+ TimeoutScheduler
+│   │   ├── entity/              # エンティティクラス（16つ）
+│   │   ├── mapper/              # MyBatis-Plus Mapper（16つ）
+│   │   └── service/             # ビジネスロジック層（7つ）+ TimeoutScheduler
 │   ├── src/test/java/com/smarterp/service/
 │   │   ├── LeaveServiceTest.java   # 承認フローテスト（18ケース）
 │   │   └── UserServiceTest.java    # ユーザーログインテスト（5ケース）
@@ -90,7 +90,7 @@ smarterp/
 
 ## テスト
 
-プロジェクトには **52 件のユニットテスト**が含まれており、承認フロー・経費精算・複式簿記・月結の主要なシナリオをカバーしています。
+プロジェクトには **63 件のユニットテスト**が含まれており、承認フロー・経費精算・複式簿記・月結の主要なシナリオをカバーしています。
 
 ```bash
 # 全テスト実行
@@ -113,6 +113,7 @@ cd backend && ./mvnw test
 | ExpenseServiceTest | 6 | 経費精算（提出・取下げ・却下） |
 | UserServiceTest | 5 | ログイン・ユーザー管理 |
 | SmartERPApplicationTests | 1 | アプリケーション起動 |
+| PortfolioServiceTest | 11 | ポートフォリオ（取引・保有・パフォーマンス・配分・ダッシュボード） |
 
 **AccountingServiceTest 内訳：**
 - 記帳: 5件（正常、精度、ゼロ値、負値、科目別）
@@ -128,6 +129,8 @@ cd backend && ./mvnw test
 ---
 
 ## データベース設計
+
+全 21 テーブル：
 
 | テーブル名 | 説明 |
 |------|------|
@@ -147,6 +150,11 @@ cd backend && ./mvnw test
 | `profit_center` | プロフィットセンターテーブル |
 | `fiscal_period` | 会計期間テーブル（OPEN/CLOSED ステータス） |
 | `period_balance` | 月次決算残高スナップショットテーブル |
+| `portfolio` | 投資ポートフォリオテーブル |
+| `portfolio_asset` | 資産テーブル（ETF/株式/債券/現金） |
+| `portfolio_holding` | 保有テーブル（加重平均原価） |
+| `portfolio_trade` | 取引記録テーブル（BUY/SELL） |
+| `portfolio_dividend` | 配当記録テーブル |
 
 ---
 
@@ -165,6 +173,10 @@ CREATE DATABASE smarterp DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_c
 ```
 
 その後、`docs/` 配下の SQL スクリプトを順にインポートします。
+```bash
+mysql -u root -p123456 --default-character-set=utf8mb4 smarterp < docs/mysql-p7-accounting.sql
+mysql -u root -p123456 --default-character-set=utf8mb4 smarterp < docs/mysql-p8-portfolio.sql
+```
 
 ### 2. バックエンド起動
 
@@ -248,6 +260,18 @@ pnpm run dev
 - [x] **反月次決算（反月結）** — 期間を再オープンし、スナップショットを削除
 - [x] **財務ダッシュボード** — 期間・コストセンター・プロフィットセンター別データ集計
 
+### v4.0 Finance — Portfolio（ポートフォリオ管理）✅ 完了
+
+- [x] **Investment Portfolio** — 複数ポートフォリオ管理（USD/JPY/CNY 基準通貨）
+- [x] **資産管理** — ETF/株式/債券/現金、手動価格更新
+- [x] **取引実行** — BUY/SELL、加重平均原価で保有自動更新
+- [x] **保有サマリー** — 時価評価/含み損益/損益率/資産配分
+- [x] **配当管理** — 配当金記録（1口あたり配当/保有数量/合計金額）
+- [x] **資産配分** — ECharts 円グラフ可視化
+- [x] **ポートフォリオパフォーマンス** — 総収益率/年間収益率/最大ドローダウン/シャープレシオ/ボラティリティ
+- [x] **投資ダッシュボード** — 統計カード + パフォーマンス指標 + 資産配分円グラフ + 保有明細
+- [x] **デモデータ** — QQQM / VOO / VTI（実際の投資ポートフォリオ連動）
+
 ### テスト
 - [x] **承認フローテスト** — 申請提出、承認、却下、取下げ、転送、照会を網羅
 - [x] **異常系テスト** — 権限超越、重複操作、不正パラメータの検証
@@ -310,7 +334,7 @@ pnpm run dev
 | v1.0 ✅ | **OA** | 承認フローと複式簿記の基盤構築 |
 | v2.0 ✅ | **Accounting** | 企業の財務核算と証票管理を実現 |
 | v3.0 📅 | **Treasury** | キャッシュフロー・銀行口座・資金振替を統合管理 |
-| v4.0 📅 | **Portfolio** | 遊休資金の運用を支援し、収益率・リスク分析を提供 |
+| v4.0 ✅ | **Portfolio** | 遊休資金の運用を支援し、収益率・リスク分析を提供 |
 | v5.0 📅 | **Analytics** | 全データを BI ダッシュボードに集約 |
 | v6.0 📅 | **AI** | AI による承認支援・財務分析・リスク予測 |
 
