@@ -139,12 +139,11 @@ class TemplateVersionSchemaMigrationIntegrationTest {
 
     /**
      * 简单语句拆分：按分号分割，忽略以 -- 开头的行。
-     * 处理 PREPARE/EXECUTE/DEALLOCATE 语句块。
+     * 处理 PREPARE/EXECUTE/DEALLOCATE 语句块（每个语句单独拆分）。
      */
     static List<String> splitStatements(String sql) {
         List<String> statements = new ArrayList<>();
         StringBuilder current = new StringBuilder();
-        boolean inMultiLine = false;
 
         for (String line : sql.split("\n")) {
             String trimmedLine = line.trim();
@@ -154,20 +153,10 @@ class TemplateVersionSchemaMigrationIntegrationTest {
                 continue;
             }
 
-            // Track PREPARE blocks (multi-statement)
-            if (trimmedLine.toUpperCase().startsWith("PREPARE ")) {
-                inMultiLine = true;
-            }
-
             current.append(line).append("\n");
 
-            if (trimmedLine.endsWith(";") && !inMultiLine) {
-                statements.add(current.toString().trim());
-                current = new StringBuilder();
-            }
-
-            if (trimmedLine.toUpperCase().startsWith("DEALLOCATE ")) {
-                inMultiLine = false;
+            // Each statement ends at a semicolon (including PREPARE, EXECUTE, DEALLOCATE)
+            if (trimmedLine.endsWith(";")) {
                 statements.add(current.toString().trim());
                 current = new StringBuilder();
             }
