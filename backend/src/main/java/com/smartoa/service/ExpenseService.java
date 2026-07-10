@@ -76,6 +76,11 @@ public class ExpenseService {
             throw new BusinessException("该经费申请已处理");
         }
 
+        // 验证审批动作 - 只允许 APPROVE 和 REJECT
+        if (!"APPROVE".equals(action) && !"REJECT".equals(action)) {
+            throw new BusinessException(400, "审批动作仅支持 APPROVE 或 REJECT");
+        }
+
         int currentStep = request.getApprovalStep();
 
         // 查并行任务
@@ -100,6 +105,9 @@ public class ExpenseService {
 
         // 驳回
         if ("REJECT".equals(action)) {
+            // 保存当前节点ID，用于后续跳过并行任务
+            Long rejectedNodeId = request.getCurrentNodeId();
+
             request.setStatus("REJECTED");
             request.setCurrentApproverId(null);
             request.setCurrentNodeId(null);
@@ -111,7 +119,8 @@ public class ExpenseService {
                 task.setStatus("COMPLETED");
                 task.setUpdateTime(LocalDateTime.now());
                 expenseApprovalTaskMapper.updateById(task);
-                skipPendingTasks(requestId, request.getCurrentNodeId());
+                // 跳过该节点其余待处理任务（使用驳回前的节点ID）
+                skipPendingTasks(requestId, rejectedNodeId);
             }
             return;
         }

@@ -74,6 +74,11 @@ public class LeaveService {
             throw new BusinessException("该请假单已处理");
         }
 
+        // 验证审批动作 - 只允许 APPROVE 和 REJECT
+        if (!"APPROVE".equals(action) && !"REJECT".equals(action)) {
+            throw new BusinessException(400, "审批动作仅支持 APPROVE 或 REJECT");
+        }
+
         int currentStep = request.getApprovalStep();
 
         ApprovalTask task = null;
@@ -100,19 +105,23 @@ public class LeaveService {
         approvalRecordMapper.insert(record);
 
         if ("REJECT".equals(action)) {
+            // 保存当前节点ID，用于后续跳过并行任务
+            Long rejectedNodeId = request.getCurrentNodeId();
+
             request.setStatus("REJECTED");
             request.setCurrentApproverId(null);
             request.setCurrentNodeId(null);
             request.setTimeoutTime(null);
             leaveRequestMapper.updateById(request);
+
             if (task != null) {
                 task.setStatus("COMPLETED");
                 approvalTaskMapper.updateById(task);
-                // 跳过该节点其余待处理任务
+                // 跳过该节点其余待处理任务（使用驳回前的节点ID）
                 approvalTaskMapper.update(null,
                         new LambdaUpdateWrapper<ApprovalTask>()
                                 .eq(ApprovalTask::getLeaveRequestId, requestId)
-                                .eq(ApprovalTask::getNodeId, request.getCurrentNodeId())
+                                .eq(ApprovalTask::getNodeId, rejectedNodeId)
                                 .eq(ApprovalTask::getStatus, "PENDING")
                                 .set(ApprovalTask::getStatus, "SKIPPED"));
             }
