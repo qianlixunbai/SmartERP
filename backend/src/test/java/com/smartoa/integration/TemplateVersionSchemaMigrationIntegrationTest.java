@@ -44,7 +44,9 @@ class TemplateVersionSchemaMigrationIntegrationTest {
         mysql = new MySQLContainer<>(MYSQL_IMAGE)
                 .withDatabaseName("smarterp_test_tv")
                 .withUsername("test")
-                .withPassword("test");
+                .withPassword("test")
+                // Force UTF-8 for init scripts and server — prevents Chinese garbled text
+                .withCommand("--character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci");
 
         // Mount pre-schema init script
         Path preSchemaPath = resolvePath("backend/src/test/resources/sql/template-versioning-pre-schema.sql");
@@ -55,7 +57,7 @@ class TemplateVersionSchemaMigrationIntegrationTest {
 
         mysql.start();
 
-        // JDBC connection with UTF-8 encoding for Chinese characters in fixtures
+        // JDBC connection with UTF-8 encoding
         connection = DriverManager.getConnection(
                 mysql.getJdbcUrl() + "?characterEncoding=utf-8&useUnicode=true",
                 mysql.getUsername(),
