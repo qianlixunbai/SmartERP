@@ -15,9 +15,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DisplayName("GlobalExceptionHandler HTTP 状态码测试（MockMvc standalone）")
 class GlobalExceptionHandlerHttpStatusTest {
 
-    /**
-     * 仅用于测试的内部 Controller，触发各种异常
-     */
     @RestController
     static class TestController {
         @GetMapping("/test/business-400")
@@ -32,6 +29,9 @@ class GlobalExceptionHandlerHttpStatusTest {
         @GetMapping("/test/business-404")
         public void throw404() { throw new BusinessException(404, "资源不存在"); }
 
+        @GetMapping("/test/business-422")
+        public void throw422() { throw new BusinessException(422, "校验失败"); }
+
         @GetMapping("/test/business-500")
         public void throw500() { throw new BusinessException(500, "服务器内部错误"); }
 
@@ -40,6 +40,9 @@ class GlobalExceptionHandlerHttpStatusTest {
 
         @GetMapping("/test/business-default")
         public void throwDefault() { throw new BusinessException("业务校验失败"); }
+
+        @GetMapping("/test/business-1234")
+        public void throw1234() { throw new BusinessException(1234, "自定义业务码"); }
 
         @GetMapping("/test/runtime-exception")
         public void throwRuntime() { throw new RuntimeException("未预期异常"); }
@@ -99,13 +102,35 @@ class GlobalExceptionHandlerHttpStatusTest {
     }
 
     @Test
-    @DisplayName("BusinessException(500) → HTTP 422, body.code=500（业务校验失败）")
+    @DisplayName("BusinessException(422) → HTTP 422, body.code=422")
+    void testBusiness422() throws Exception {
+        mockMvc.perform(get("/test/business-422"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.code").value(422))
+                .andExpect(jsonPath("$.message").value("校验失败"))
+                .andExpect(jsonPath("$.data").isEmpty());
+    }
+
+    @Test
+    @DisplayName("BusinessException(500) → HTTP 500, body.code=500")
     void testBusiness500() throws Exception {
         mockMvc.perform(get("/test/business-500"))
-                .andExpect(status().isUnprocessableEntity())
+                .andExpect(status().isInternalServerError())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.code").value(500))
                 .andExpect(jsonPath("$.message").value("服务器内部错误"))
+                .andExpect(jsonPath("$.data").isEmpty());
+    }
+
+    @Test
+    @DisplayName("new BusinessException(\"业务校验失败\") → HTTP 422, body.code=422")
+    void testBusinessDefault() throws Exception {
+        mockMvc.perform(get("/test/business-default"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.code").value(422))
+                .andExpect(jsonPath("$.message").value("业务校验失败"))
                 .andExpect(jsonPath("$.data").isEmpty());
     }
 
@@ -121,13 +146,13 @@ class GlobalExceptionHandlerHttpStatusTest {
     }
 
     @Test
-    @DisplayName("BusinessException(无显式 code) → HTTP 422, body.code=500")
-    void testBusinessDefault() throws Exception {
-        mockMvc.perform(get("/test/business-default"))
+    @DisplayName("BusinessException(1234) → HTTP 422, body.code=1234")
+    void testBusiness1234() throws Exception {
+        mockMvc.perform(get("/test/business-1234"))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.code").value(500))
-                .andExpect(jsonPath("$.message").value("业务校验失败"))
+                .andExpect(jsonPath("$.code").value(1234))
+                .andExpect(jsonPath("$.message").value("自定义业务码"))
                 .andExpect(jsonPath("$.data").isEmpty());
     }
 
