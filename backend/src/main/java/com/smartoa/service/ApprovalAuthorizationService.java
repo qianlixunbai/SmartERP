@@ -43,7 +43,7 @@ public class ApprovalAuthorizationService {
      * @throws BusinessException 401/404/403
      */
     public LeaveRequest requireReadableLeave(Long requestId, User user) {
-        if (user == null) {
+        if (user == null || user.getId() == null) {
             throw new BusinessException(401, "请先登录");
         }
 
@@ -91,7 +91,7 @@ public class ApprovalAuthorizationService {
      * @throws BusinessException 401/404/403
      */
     public ExpenseRequest requireReadableExpense(Long requestId, User user) {
-        if (user == null) {
+        if (user == null || user.getId() == null) {
             throw new BusinessException(401, "请先登录");
         }
 

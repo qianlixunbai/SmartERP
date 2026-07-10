@@ -93,6 +93,32 @@ class ApprovalAuthorizationServiceTest {
         }
 
         @Test
+        @DisplayName("用户非 null 但 id 为 null 应抛 401，不查询申请")
+        void userWithNullId_ShouldThrow401() {
+            User noId = new User();
+            noId.setRole("EMPLOYEE");
+
+            BusinessException ex = assertThrows(BusinessException.class,
+                    () -> service.requireReadableLeave(REQUEST_ID, noId));
+            assertEquals(401, ex.getCode());
+            verifyNoInteractions(leaveRequestMapper);
+            verifyNoInteractions(approvalRecordMapper);
+            verifyNoInteractions(approvalTaskMapper);
+        }
+
+        @Test
+        @DisplayName("MANAGER 但 id 为 null 应抛 401，不能放行")
+        void managerWithNullId_ShouldThrow401() {
+            User noIdManager = new User();
+            noIdManager.setRole("MANAGER");
+
+            BusinessException ex = assertThrows(BusinessException.class,
+                    () -> service.requireReadableLeave(REQUEST_ID, noIdManager));
+            assertEquals(401, ex.getCode());
+            verifyNoInteractions(leaveRequestMapper);
+        }
+
+        @Test
         @DisplayName("申请不存在应抛 404")
         void requestNotFound_ShouldThrow404() {
             User user = user(UNRELATED_ID, "EMPLOYEE");
@@ -214,6 +240,20 @@ class ApprovalAuthorizationServiceTest {
                     () -> service.requireReadableExpense(REQUEST_ID, null));
             assertEquals(401, ex.getCode());
             verifyNoInteractions(expenseRequestMapper);
+        }
+
+        @Test
+        @DisplayName("用户非 null 但 id 为 null 应抛 401，不查询申请")
+        void userWithNullId_ShouldThrow401() {
+            User noId = new User();
+            noId.setRole("EMPLOYEE");
+
+            BusinessException ex = assertThrows(BusinessException.class,
+                    () -> service.requireReadableExpense(REQUEST_ID, noId));
+            assertEquals(401, ex.getCode());
+            verifyNoInteractions(expenseRequestMapper);
+            verifyNoInteractions(expenseApprovalTaskMapper);
+            verifyNoInteractions(auditLogMapper);
         }
 
         @Test
