@@ -1,5 +1,6 @@
 package com.smartoa.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartoa.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -14,6 +15,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     private final JwtUtil jwtUtil;
     private final UserMapper userMapper;
+    private final ObjectMapper objectMapper;
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
@@ -27,7 +29,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Bean
     public FilterRegistrationBean<JwtFilter> jwtFilterRegistration() {
         FilterRegistrationBean<JwtFilter> registration = new FilterRegistrationBean<>();
-        registration.setFilter(new JwtFilter(jwtUtil, userMapper));
+        registration.setFilter(new JwtFilter(jwtUtil, userMapper, objectMapper));
         registration.addUrlPatterns("/api/*");
         registration.setOrder(1);
         return registration;

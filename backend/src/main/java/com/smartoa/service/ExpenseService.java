@@ -8,8 +8,6 @@ import com.smartoa.entity.*;
 import com.smartoa.mapper.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +27,7 @@ public class ExpenseService {
     private final UserMapper userMapper;
     private final AuditLogMapper auditLogMapper;
     private final AccountingService accountingService;
+    private final ApprovalConditionEvaluator conditionEvaluator;
 
     // ========== 提交 ==========
 
@@ -76,6 +75,11 @@ public class ExpenseService {
             throw new BusinessException("该经费申请已处理");
         }
 
+        // 验证审批动作 - 只允许 APPROVE 和 REJECT
+        if (!"APPROVE".equals(action) && !"REJECT".equals(action)) {
+            throw new BusinessException(400, "审批动作仅支持 APPROVE 或 REJECT");
+        }
+
         int currentStep = request.getApprovalStep();
 
         // 查并行任务
@@ -95,11 +99,14 @@ public class ExpenseService {
         }
 
         // 写审计日志
-        writeAuditLog("APPROVE", "EXPENSE", requestId, approverId,
+        writeAuditLog(action, "EXPENSE", requestId, approverId,
                 "action=" + action + ", comment=" + comment);
 
         // 驳回
         if ("REJECT".equals(action)) {
+            // 保存当前节点ID，用于后续跳过并行任务
+            Long rejectedNodeId = request.getCurrentNodeId();
+
             request.setStatus("REJECTED");
             request.setCurrentApproverId(null);
             request.setCurrentNodeId(null);
@@ -111,7 +118,8 @@ public class ExpenseService {
                 task.setStatus("COMPLETED");
                 task.setUpdateTime(LocalDateTime.now());
                 expenseApprovalTaskMapper.updateById(task);
-                skipPendingTasks(requestId, request.getCurrentNodeId());
+                // 跳过该节点其余待处理任务（使用驳回前的节点ID）
+                skipPendingTasks(requestId, rejectedNodeId);
             }
             return;
         }
@@ -276,7 +284,7 @@ public class ExpenseService {
 
         for (int i = startIndex; i < nodes.size(); i++) {
             ApprovalNode node = nodes.get(i);
-            if (evaluateCondition(node.getConditionExpression(), request)) {
+            if (conditionEvaluator.evaluateExpense(node.getConditionExpression(), request)) {
                 List<Long> approverIds = resolveApprovers(node, applicant);
 
                 if (approverIds == null || approverIds.isEmpty()) {
@@ -328,28 +336,6 @@ public class ExpenseService {
         return "COUNTER_SIGN".equals(node.getSignType()) || "OR_SIGN".equals(node.getSignType());
     }
 
-    /**
-     * SpEL条件求值 — 经费版本，暴露 amount 和 category
-     */
-    public record ExpenseConditionVars(BigDecimal amount, String category) {}
-
-    private boolean evaluateCondition(String expression, ExpenseRequest request) {
-        if (expression == null || expression.isBlank()) {
-            return true;
-        }
-        try {
-            ExpenseConditionVars vars = new ExpenseConditionVars(
-                    request.getAmount(), request.getCategory());
-            StandardEvaluationContext ctx = new StandardEvaluationContext(vars);
-            Boolean result = new SpelExpressionParser()
-                    .parseExpression(expression).getValue(ctx, Boolean.class);
-            return Boolean.TRUE.equals(result);
-        } catch (Exception e) {
-            log.warn("SpEL求值失败: expr='{}' — {}", expression, e.getMessage());
-            return true;
-        }
-    }
-
     private List<Long> resolveApprovers(ApprovalNode node, User applicant) {
         if (!isParallel(node)) {
             Long singleId = switch (node.getApproverType()) {
@@ -378,12 +364,7 @@ public class ExpenseService {
 
     private void skipPendingTasks(Long requestId, Long nodeId) {
         if (nodeId != null) {
-            expenseApprovalTaskMapper.update(null,
-                    new LambdaUpdateWrapper<ExpenseApprovalTask>()
-                            .eq(ExpenseApprovalTask::getExpenseRequestId, requestId)
-                            .eq(ExpenseApprovalTask::getNodeId, nodeId)
-                            .eq(ExpenseApprovalTask::getStatus, "PENDING")
-                            .set(ExpenseApprovalTask::getStatus, "SKIPPED"));
+            expenseApprovalTaskMapper.skipPendingByRequestAndNode(requestId, nodeId);
         }
     }
 

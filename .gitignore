@@ -17,12 +17,62 @@ bin-release/
 # should NOT be excluded as they contain compiler settings and other important
 # information for Eclipse / Flash Builder.
 
+# ============================================
+# SmartERP additions
+# ============================================
+
 # IDE
 .idea/
 *.iml
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
-# Build
-target/
+# Build output
+backend/target/
+frontend/dist/
+frontend/dist-ssr/
+
+# Dependencies
+frontend/node_modules/
+
+# Coverage & test reports
+coverage/
+*.lcov
+
+# Environment files (keep .env.example tracked)
+.env
+.env.*
+!.env.example
+
+# Local / secret Spring Boot profiles (keep template profiles tracked)
+application-local.properties
+application-local.yml
+application-local.yaml
+application-secret.properties
+application-secret.yml
+application-secret.yaml
+application-*-local.properties
+application-*-local.yml
+application-*-local.yaml
+!application-dev.properties
+!application-prod.properties
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
 
 # Docs & personal files
 HELP.md

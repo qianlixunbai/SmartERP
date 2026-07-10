@@ -66,4 +66,9 @@ public class ExpenseRequest {
 
     @TableField("update_time")
     private LocalDateTime updateTime;
+
+    // ======== P9 模板版本化新增字段 ========
+
+    @TableField("template_id")
+    private Long templateId;
 }

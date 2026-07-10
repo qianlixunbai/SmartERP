@@ -1,5 +1,7 @@
 package com.smartoa.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smartoa.common.Result;
 import com.smartoa.mapper.UserMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -15,6 +17,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserMapper userMapper;
+    private final ObjectMapper objectMapper;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -36,25 +39,19 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String header = request.getHeader("Authorization");
         if (header == null || !header.startsWith("Bearer ")) {
-            response.setStatus(401);
-            response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write("{\"success\":false,\"message\":\"未登录\"}");
+            writeUnauthorized(response, "未登录");
             return;
         }
 
         String token = header.substring(7);
         if (!jwtUtil.validateToken(token)) {
-            response.setStatus(401);
-            response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write("{\"success\":false,\"message\":\"token无效或已过期\"}");
+            writeUnauthorized(response, "token无效或已过期");
             return;
         }
 
         Long userId = jwtUtil.getUserIdFromToken(token);
         if (userMapper.selectById(userId) == null) {
-            response.setStatus(401);
-            response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write("{\"success\":false,\"message\":\"用户不存在\"}");
+            writeUnauthorized(response, "用户不存在");
             return;
         }
 
@@ -64,5 +61,11 @@ public class JwtFilter extends OncePerRequestFilter {
         } finally {
             UserContextHolder.clear();
         }
+    }
+
+    private void writeUnauthorized(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(401);
+        response.setContentType("application/json;charset=UTF-8");
+        response.getWriter().write(objectMapper.writeValueAsString(Result.error(401, message)));
     }
 }
