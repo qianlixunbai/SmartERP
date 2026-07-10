@@ -79,11 +79,10 @@ public class PortfolioService {
         return a;
     }
 
-    public void updateAssetPrice(String symbol, BigDecimal price) {
-        PortfolioAsset asset = assetMapper.selectOne(
-                new LambdaQueryWrapper<PortfolioAsset>().eq(PortfolioAsset::getSymbol, symbol.toUpperCase()));
+    public void updateAssetPrice(Long assetId, BigDecimal price) {
+        PortfolioAsset asset = assetMapper.selectById(assetId);
         if (asset == null) {
-            throw new BusinessException("资产标的不存在: " + symbol);
+            throw new BusinessException("资产标的不存在");
         }
         asset.setCurrentPrice(price.setScale(4, RoundingMode.HALF_UP));
         asset.setPriceDate(LocalDate.now());

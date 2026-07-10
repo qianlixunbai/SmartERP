@@ -2,13 +2,14 @@ package com.smartoa.controller;
 
 import com.smartoa.common.BusinessException;
 import com.smartoa.common.Result;
-import com.smartoa.dto.AssetPriceUpdate;
-import com.smartoa.dto.DividendRequest;
-import com.smartoa.dto.TradeRequest;
+import com.smartoa.dto.*;
 import com.smartoa.entity.*;
 import com.smartoa.service.PortfolioService;
 import com.smartoa.service.UserService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
+@Validated
 public class PortfolioController {
 
     private final PortfolioService portfolioService;
@@ -44,10 +46,10 @@ public class PortfolioController {
     }
 
     @PostMapping("/api/portfolio/portfolios")
-    public Result<Portfolio> createPortfolio(@RequestBody Map<String, String> body) {
+    public Result<Portfolio> createPortfolio(@RequestBody @Valid PortfolioCreateRequest dto) {
         requireManager();
         return Result.success(portfolioService.createPortfolio(
-                body.get("name"), body.get("description"), body.get("baseCurrency")));
+                dto.getName(), dto.getDescription(), dto.getBaseCurrency()));
     }
 
     // ==================== 资产标的 ====================
@@ -59,16 +61,17 @@ public class PortfolioController {
     }
 
     @PostMapping("/api/portfolio/assets")
-    public Result<PortfolioAsset> createAsset(@RequestBody Map<String, String> body) {
+    public Result<PortfolioAsset> createAsset(@RequestBody @Valid PortfolioAssetCreateRequest dto) {
         requireManager();
         return Result.success(portfolioService.createAsset(
-                body.get("symbol"), body.get("name"), body.get("assetType"), body.get("currency")));
+                dto.getSymbol(), dto.getName(), dto.getAssetType(), dto.getCurrency()));
     }
 
     @PutMapping("/api/portfolio/assets/{id}/price")
-    public Result<Void> updateAssetPrice(@PathVariable Long id, @RequestBody AssetPriceUpdate dto) {
+    public Result<Void> updateAssetPrice(@PathVariable @Positive(message = "ID必须为正整数") Long id,
+                                          @RequestBody @Valid AssetPriceUpdate dto) {
         requireManager();
-        portfolioService.updateAssetPrice(dto.getSymbol(), dto.getCurrentPrice());
+        portfolioService.updateAssetPrice(id, dto.getCurrentPrice());
         return Result.success(null, "价格已更新");
     }
 
@@ -89,7 +92,7 @@ public class PortfolioController {
     }
 
     @PostMapping("/api/portfolio/trades")
-    public Result<PortfolioTrade> executeTrade(@RequestBody TradeRequest dto) {
+    public Result<PortfolioTrade> executeTrade(@RequestBody @Valid TradeRequest dto) {
         User user = requireManager();
         return Result.success(portfolioService.executeTrade(dto, user.getId()));
     }
@@ -103,7 +106,7 @@ public class PortfolioController {
     }
 
     @PostMapping("/api/portfolio/dividends")
-    public Result<PortfolioDividend> recordDividend(@RequestBody DividendRequest dto) {
+    public Result<PortfolioDividend> recordDividend(@RequestBody @Valid DividendRequest dto) {
         requireManager();
         return Result.success(portfolioService.recordDividend(dto));
     }

@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
-public class ExpenseApproveRequest {
+public class LeaveApproveRequest {
     @NotNull(message = "申请ID不能为空")
     @Positive(message = "申请ID必须为正整数")
     private Long requestId;

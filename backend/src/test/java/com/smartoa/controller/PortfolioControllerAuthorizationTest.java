@@ -116,7 +116,7 @@ class PortfolioControllerAuthorizationTest {
             case "POST assets" -> when(portfolioService.createAsset(any(), any(), any(), any()))
                     .thenReturn(new PortfolioAsset());
             case "PUT asset price" -> doNothing().when(portfolioService)
-                    .updateAssetPrice(anyString(), any());
+                    .updateAssetPrice(anyLong(), any());
             case "GET holdings" -> when(portfolioService.getHoldingsSummary(1L)).thenReturn(List.of());
             case "GET trades" -> when(portfolioService.getTrades(1L)).thenReturn(List.of());
             case "POST trades" -> when(portfolioService.executeTrade(any(), eq(1L)))
@@ -159,19 +159,21 @@ class PortfolioControllerAuthorizationTest {
                         service -> verify(service).createAsset("AAPL", "Apple", "STOCK", "USD")),
                 new EndpointSpec("PUT asset price", () -> put("/api/portfolio/assets/1/price")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"symbol\":\"AAPL\",\"currentPrice\":100.0000}"),
-                        service -> verify(service).updateAssetPrice(eq("AAPL"), any())),
+                        .content("{\"currentPrice\":100.0000}"),
+                        service -> verify(service).updateAssetPrice(eq(1L), any())),
                 new EndpointSpec("GET holdings", () -> get("/api/portfolio/holdings").param("portfolioId", "1"),
                         service -> verify(service).getHoldingsSummary(1L)),
                 new EndpointSpec("GET trades", () -> get("/api/portfolio/trades").param("portfolioId", "1"),
                         service -> verify(service).getTrades(1L)),
                 new EndpointSpec("POST trades", () -> post("/api/portfolio/trades")
-                        .contentType(MediaType.APPLICATION_JSON).content("{}"),
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"portfolioId\":1,\"assetId\":1,\"tradeType\":\"BUY\",\"quantity\":10,\"price\":100}"),
                         service -> verify(service).executeTrade(any(), eq(1L))),
                 new EndpointSpec("GET dividends", () -> get("/api/portfolio/dividends").param("portfolioId", "1"),
                         service -> verify(service).getDividends(1L)),
                 new EndpointSpec("POST dividends", () -> post("/api/portfolio/dividends")
-                        .contentType(MediaType.APPLICATION_JSON).content("{}"),
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"portfolioId\":1,\"assetId\":1,\"amount\":100,\"perShare\":1.0,\"quantity\":10,\"dividendDate\":\"2026-06-30\"}"),
                         service -> verify(service).recordDividend(any())),
                 new EndpointSpec("GET allocation", () -> get("/api/portfolio/allocation").param("portfolioId", "1"),
                         service -> verify(service).getAssetAllocation(1L)),

@@ -39,7 +39,7 @@ jobs:
         working-directory: backend
         run: |
           ./mvnw -B -ntp \
-            -Dtest=JwtPropertiesValidationTest,ApprovalAuthorizationServiceTest,LeaveControllerObjectAuthorizationTest,ExpenseControllerObjectAuthorizationTest,LeaveServiceApprovalActionTest,ExpenseServiceApprovalActionTest,LeaveControllerRepairPermissionTest,LeaveServiceRejectionCleanupTest,ExpenseServiceRejectionCleanupTest,GlobalExceptionHandlerHttpStatusTest,JwtFilterHttpResponseTest,ControllerHttpStatusTest,PortfolioControllerAuthorizationTest,ApprovalConditionEvaluatorTest,ApprovalConditionServiceIntegrationTest \
+            -Dtest=JwtPropertiesValidationTest,ApprovalAuthorizationServiceTest,LeaveControllerObjectAuthorizationTest,ExpenseControllerObjectAuthorizationTest,LeaveServiceApprovalActionTest,ExpenseServiceApprovalActionTest,LeaveControllerRepairPermissionTest,LeaveServiceRejectionCleanupTest,ExpenseServiceRejectionCleanupTest,GlobalExceptionHandlerHttpStatusTest,JwtFilterHttpResponseTest,ControllerHttpStatusTest,PortfolioControllerAuthorizationTest,ApprovalConditionEvaluatorTest,ApprovalConditionServiceIntegrationTest,RequestValidationHttpTest,RequestDtoValidationTest,PortfolioServiceAssetPriceTest \
             test
 
       - name: Upload Surefire reports
