@@ -71,7 +71,7 @@ public class LeaveController {
     @PostMapping("/api/leave/repair")
     public Result<Integer> repairStuckRequests() {
         User user = userService.getLoginUser();
-        if (user == null) {
+        if (user == null || user.getId() == null) {
             throw new BusinessException(401, "请先登录");
         }
         if (!"MANAGER".equals(user.getRole())) {

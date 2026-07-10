@@ -170,4 +170,55 @@ class ExpenseServiceApprovalActionTest {
             }
         }
     }
+
+    @Nested
+    @DisplayName("审计日志 action 语义")
+    class AuditActionTests {
+
+        @Test
+        @DisplayName("APPROVE 应写入 action=APPROVE 的审计日志")
+        void testApprove_ShouldWriteApproveAuditLog() {
+            when(expenseRequestMapper.selectById(1L)).thenReturn(pendingRequest);
+            // 单人审批，无并行任务
+            when(expenseApprovalTaskMapper.selectOne(any())).thenReturn(null);
+            // 无审批节点 → finalizeApproval
+            when(approvalNodeMapper.selectList(any())).thenReturn(java.util.List.of());
+
+            expenseService.approveExpense(1L, 2L, "APPROVE", "同意");
+
+            verify(auditLogMapper).insert(argThat((AuditLog log) ->
+                    "APPROVE".equals(log.getAction()) &&
+                    "EXPENSE".equals(log.getTargetType()) &&
+                    Long.valueOf(1L).equals(log.getTargetId()) &&
+                    Long.valueOf(2L).equals(log.getActorId())
+            ));
+        }
+
+        @Test
+        @DisplayName("REJECT 应写入 action=REJECT 的审计日志")
+        void testReject_ShouldWriteRejectAuditLog() {
+            when(expenseRequestMapper.selectById(1L)).thenReturn(pendingRequest);
+            when(expenseApprovalTaskMapper.selectOne(any())).thenReturn(null);
+
+            expenseService.approveExpense(1L, 2L, "REJECT", "不同意");
+
+            verify(auditLogMapper).insert(argThat((AuditLog log) ->
+                    "REJECT".equals(log.getAction()) &&
+                    "EXPENSE".equals(log.getTargetType()) &&
+                    Long.valueOf(1L).equals(log.getTargetId()) &&
+                    Long.valueOf(2L).equals(log.getActorId())
+            ));
+        }
+
+        @Test
+        @DisplayName("REJECT 不应触发 AccountingService.post()")
+        void testReject_ShouldNotTriggerPosting() {
+            when(expenseRequestMapper.selectById(1L)).thenReturn(pendingRequest);
+            when(expenseApprovalTaskMapper.selectOne(any())).thenReturn(null);
+
+            expenseService.approveExpense(1L, 2L, "REJECT", "不同意");
+
+            verify(accountingService, never()).post(any(), any(), any(), any(), any(), any(), any());
+        }
+    }
 }

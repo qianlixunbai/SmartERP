@@ -107,9 +107,9 @@ class ExpenseServiceRejectionCleanupTest {
             assertNull(request.getCurrentApproverId());
             assertNull(request.getTimeoutTime());
 
-            // 验证审计日志被写入
+            // 验证审计日志被写入，action 应为真实操作 REJECT
             verify(auditLogMapper).insert(argThat((AuditLog log) ->
-                    "APPROVE".equals(log.getAction()) &&
+                    "REJECT".equals(log.getAction()) &&
                     "EXPENSE".equals(log.getTargetType()) &&
                     Long.valueOf(1L).equals(log.getTargetId())
             ));
@@ -147,9 +147,9 @@ class ExpenseServiceRejectionCleanupTest {
             assertNull(request.getCurrentNodeId());
             assertNull(request.getCurrentApproverId());
 
-            // 验证审计日志被写入
+            // 验证审计日志被写入，action 应为真实操作 REJECT
             verify(auditLogMapper).insert(argThat((AuditLog log) ->
-                    "APPROVE".equals(log.getAction()) &&
+                    "REJECT".equals(log.getAction()) &&
                     "EXPENSE".equals(log.getTargetType()) &&
                     Long.valueOf(3L).equals(log.getTargetId())
             ));

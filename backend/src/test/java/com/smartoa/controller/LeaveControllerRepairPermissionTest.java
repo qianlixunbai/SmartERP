@@ -80,5 +80,20 @@ class LeaveControllerRepairPermissionTest {
             assertEquals(5, result.getData());
             verify(leaveService, times(1)).repairStuckRequests();
         }
+
+        @Test
+        @DisplayName("MANAGER 但 id 为 null 应返回 401")
+        void testManagerWithNullId_ShouldReturn401() {
+            User noIdManager = new User();
+            noIdManager.setRole("MANAGER");
+            when(userService.getLoginUser()).thenReturn(noIdManager);
+
+            BusinessException exception = assertThrows(BusinessException.class,
+                    () -> leaveController.repairStuckRequests());
+
+            assertEquals(401, exception.getCode());
+            assertEquals("请先登录", exception.getMessage());
+            verify(leaveService, never()).repairStuckRequests();
+        }
     }
 }

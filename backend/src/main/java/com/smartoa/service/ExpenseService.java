@@ -100,7 +100,7 @@ public class ExpenseService {
         }
 
         // 写审计日志
-        writeAuditLog("APPROVE", "EXPENSE", requestId, approverId,
+        writeAuditLog(action, "EXPENSE", requestId, approverId,
                 "action=" + action + ", comment=" + comment);
 
         // 驳回
