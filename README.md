@@ -219,41 +219,56 @@ cd backend && ./mvnw test
 
 ### 1. 配置环境变量
 
-启动前需要配置以下环境变量。复制示例文件并根据你的环境修改：
+Spring Boot **不会**自动读取仓库根目录的 `.env` 文件。请使用以下三种方式之一配置环境变量：
 
-> **注意：** Spring Boot 不会自动读取仓库根目录的 `.env` 文件。
-> 你需要在当前终端、IDE Run Configuration 或系统环境变量中加载这些变量。
+#### 方式一：IntelliJ IDEA Run Configuration（推荐）
 
-**Windows PowerShell:**
-```powershell
-Copy-Item .env.example .env
-# 编辑 .env 文件，填入你的数据库密码和 JWT 密钥
-# 然后加载变量到当前进程（立即生效）:
-Get-Content .env | ForEach-Object {
-    if ($_ -match '^\s*([^#][^=]+)=(.*)$') {
-        Set-Item -Path "Env:$($matches[1])" -Value $matches[2].Trim()
-    }
-}
+1. Run → Edit Configurations → SmartoaApplication
+2. Environment variables 中添加：
+
+```
+SMARTERP_DB_URL=jdbc:mysql://localhost:3306/smarterp?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf-8
+SMARTERP_DB_USERNAME=root
+SMARTERP_DB_PASSWORD=你的MySQL密码
+SMARTERP_JWT_SECRET=你的至少32字符JWT密钥
 ```
 
-**Windows 命令行 / Git Bash:**
-```bash
+#### 方式二：PowerShell 启动脚本
+
+```powershell
+# 1. 创建本地配置文件
 cp .env.example .env
-# 编辑 .env 文件，填入你的数据库密码和 JWT 密钥
-# 可通过 IDE（IntelliJ / VS Code）设置环境变量，或使用系统环境变量面板
+
+# 2. 编辑 .env，填入你的数据库密码和 JWT 密钥
+
+# 3. 通过脚本启动（自动加载 .env 并校验）
+.\scripts\start-dev.ps1
+```
+
+脚本会检查 `SMARTERP_JWT_SECRET` 是否存在且至少 32 字符，不会在控制台输出任何密钥。
+
+#### 方式三：PowerShell 手动设置
+
+```powershell
+$env:SMARTERP_JWT_SECRET = "你的至少32字符JWT密钥"
+$env:SMARTERP_DB_URL     = "jdbc:mysql://localhost:3306/smarterp?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf-8"
+$env:SMARTERP_DB_USERNAME = "root"
+$env:SMARTERP_DB_PASSWORD = "你的MySQL密码"
+cd backend
+.\mvnw.cmd spring-boot:run
 ```
 
 **所需环境变量：**
 
-| 变量 | 说明 | 示例值 |
-|------|------|--------|
-| `SMARTERP_DB_URL` | 数据库连接 URL | `jdbc:mysql://localhost:3306/smarterp?...` |
-| `SMARTERP_DB_USERNAME` | 数据库用户名 | `root` |
-| `SMARTERP_DB_PASSWORD` | 数据库密码 | （你的密码） |
-| `SMARTERP_JWT_SECRET` | JWT 签名密钥（≥32 字符） | （生成一个强随机字符串） |
-| `SMARTERP_JWT_EXPIRATION` | Token 过期时间（毫秒） | `86400000`（默认 24h） |
+| 变量 | 说明 | 必填 |
+|------|------|------|
+| `SMARTERP_DB_URL` | 数据库连接 URL | 是 |
+| `SMARTERP_DB_USERNAME` | 数据库用户名 | 是 |
+| `SMARTERP_DB_PASSWORD` | 数据库密码 | 是 |
+| `SMARTERP_JWT_SECRET` | JWT 签名密钥（≥32 字符） | **所有环境必填** |
+| `SMARTERP_JWT_EXPIRATION` | Token 过期时间（毫秒） | 否（默认 24h） |
 
-> **注意：** `SMARTERP_JWT_SECRET` 为**所有环境的必填项**（不少于 32 字符），缺失会导致启动失败。
+> **JWT 密钥要求：** `SMARTERP_JWT_SECRET` 为所有环境（dev/prod/test）必填项，不得少于 32 字符，缺失或过短将导致启动失败。可使用 PowerShell 生成：`$bytes = New-Object byte[] 32; [System.Security.Cryptography.RandomNumberGenerator]::Fill($bytes); [Convert]::ToBase64String($bytes)`
 
 ### 2. 建库
 
