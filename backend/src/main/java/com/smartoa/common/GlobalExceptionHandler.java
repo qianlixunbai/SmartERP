@@ -10,10 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-
-import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
@@ -96,19 +93,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Result<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException e) {
         log.warn("参数类型不匹配: {}", e.getName());
         return ResponseEntity.badRequest().body(Result.error(400, "请求参数格式错误"));
-    }
-
-    /**
-     * @Validated 控制器方法级参数校验失败（如 PathVariable @Positive）
-     */
-    @ExceptionHandler(HandlerMethodValidationException.class)
-    public ResponseEntity<Result<Void>> handleHandlerMethodValidation(HandlerMethodValidationException e) {
-        String message = e.getAllErrors().stream()
-                .map(err -> err.getDefaultMessage() != null ? err.getDefaultMessage() : "参数校验失败")
-                .findFirst()
-                .orElse("参数校验失败");
-        log.warn("方法参数校验失败: {}", message);
-        return ResponseEntity.badRequest().body(Result.error(400, message));
     }
 
     @ExceptionHandler(Exception.class)
