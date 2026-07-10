@@ -162,6 +162,18 @@ class RequestValidationHttpTest {
                     .andExpect(jsonPath("$.code").value(200));
             verify(leaveService).submitLeave(eq(1L), any(LeaveSubmitRequest.class));
         }
+
+        @Test
+        @DisplayName("templateId=0 → 400，LeaveService 无交互")
+        void templateIdZero() throws Exception {
+            leaveMvc.perform(post("/api/leave/submit")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"templateId\":0,\"leaveType\":\"年假\",\"startDate\":\"2026-07-01\",\"endDate\":\"2026-07-02\",\"reason\":\"休息\"}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value(400))
+                    .andExpect(jsonPath("$.message").value("模板ID必须为正整数"));
+            verify(leaveService, never()).submitLeave(any(), any());
+        }
     }
 
     // ======================== 请假审批 ========================
@@ -245,6 +257,18 @@ class RequestValidationHttpTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(200));
             verify(leaveService).transferLeave(1L, 1L, 2L);
+        }
+
+        @Test
+        @DisplayName("toUserId=0 → 400，LeaveService 无交互")
+        void toUserIdZero() throws Exception {
+            leaveMvc.perform(post("/api/leave/1/transfer")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"toUserId\":0}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value(400))
+                    .andExpect(jsonPath("$.message").value("转派目标用户ID必须为正整数"));
+            verify(leaveService, never()).transferLeave(any(), any(), any());
         }
     }
 
@@ -664,6 +688,30 @@ class RequestValidationHttpTest {
                     .andExpect(jsonPath("$.code").value(200));
             verify(portfolioService).executeTrade(any(TradeRequest.class), eq(1L));
         }
+
+        @Test
+        @DisplayName("portfolioId=0 → 400，PortfolioService 无交互")
+        void portfolioIdZero() throws Exception {
+            portfolioMvc.perform(post("/api/portfolio/trades")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"portfolioId\":0,\"assetId\":1,\"tradeType\":\"BUY\",\"quantity\":10,\"price\":100}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value(400))
+                    .andExpect(jsonPath("$.message").value("组合ID必须为正整数"));
+            verify(portfolioService, never()).executeTrade(any(), any());
+        }
+
+        @Test
+        @DisplayName("assetId=-1 → 400，PortfolioService 无交互")
+        void assetIdNegative() throws Exception {
+            portfolioMvc.perform(post("/api/portfolio/trades")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"portfolioId\":1,\"assetId\":-1,\"tradeType\":\"BUY\",\"quantity\":10,\"price\":100}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value(400))
+                    .andExpect(jsonPath("$.message").value("资产标的ID必须为正整数"));
+            verify(portfolioService, never()).executeTrade(any(), any());
+        }
     }
 
     // ======================== 股息 ========================
@@ -726,6 +774,30 @@ class RequestValidationHttpTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(200));
             verify(portfolioService).recordDividend(any(DividendRequest.class));
+        }
+
+        @Test
+        @DisplayName("portfolioId=0 → 400，PortfolioService 无交互")
+        void portfolioIdZero() throws Exception {
+            portfolioMvc.perform(post("/api/portfolio/dividends")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"portfolioId\":0,\"assetId\":1,\"amount\":100,\"perShare\":1.0,\"quantity\":10,\"dividendDate\":\"2026-06-30\"}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value(400))
+                    .andExpect(jsonPath("$.message").value("组合ID必须为正整数"));
+            verify(portfolioService, never()).recordDividend(any());
+        }
+
+        @Test
+        @DisplayName("assetId=-1 → 400，PortfolioService 无交互")
+        void assetIdNegative() throws Exception {
+            portfolioMvc.perform(post("/api/portfolio/dividends")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"portfolioId\":1,\"assetId\":-1,\"amount\":100,\"perShare\":1.0,\"quantity\":10,\"dividendDate\":\"2026-06-30\"}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value(400))
+                    .andExpect(jsonPath("$.message").value("资产标的ID必须为正整数"));
+            verify(portfolioService, never()).recordDividend(any());
         }
     }
 

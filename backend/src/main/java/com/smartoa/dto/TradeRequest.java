@@ -9,9 +9,11 @@ import java.time.LocalDate;
 @Data
 public class TradeRequest {
     @NotNull(message = "组合ID不能为空")
+    @Positive(message = "组合ID必须为正整数")
     private Long portfolioId;
 
     @NotNull(message = "资产标的ID不能为空")
+    @Positive(message = "资产标的ID必须为正整数")
     private Long assetId;
 
     @NotBlank(message = "交易类型不能为空")

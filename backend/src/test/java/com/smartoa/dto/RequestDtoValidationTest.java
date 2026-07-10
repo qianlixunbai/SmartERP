@@ -89,6 +89,30 @@ class RequestDtoValidationTest {
                 .noneMatch(v -> v.getMessage().contains("结束日期不能早于开始日期")));
     }
 
+    @Test
+    @DisplayName("请假：templateId=0 → violation")
+    void leaveSubmit_templateIdZero() {
+        LeaveSubmitRequest dto = new LeaveSubmitRequest();
+        dto.setTemplateId(0L);
+        dto.setLeaveType("年假");
+        dto.setStartDate(LocalDate.of(2026, 7, 1));
+        dto.setEndDate(LocalDate.of(2026, 7, 2));
+        dto.setReason("休息");
+        assertHasViolation(dto, "模板ID必须为正整数");
+    }
+
+    @Test
+    @DisplayName("请假：templateId=-1 → violation")
+    void leaveSubmit_templateIdNegative() {
+        LeaveSubmitRequest dto = new LeaveSubmitRequest();
+        dto.setTemplateId(-1L);
+        dto.setLeaveType("年假");
+        dto.setStartDate(LocalDate.of(2026, 7, 1));
+        dto.setEndDate(LocalDate.of(2026, 7, 2));
+        dto.setReason("休息");
+        assertHasViolation(dto, "模板ID必须为正整数");
+    }
+
     // ======================== ExpenseSubmitRequest ========================
 
     @Test
@@ -120,6 +144,24 @@ class RequestDtoValidationTest {
         dto.setTemplateId(null);
         dto.setCostCenterId(null);
         assertNoViolation(dto);
+    }
+
+    // ======================== LeaveTransferRequest ========================
+
+    @Test
+    @DisplayName("转派：toUserId=0 → violation")
+    void leaveTransfer_toUserIdZero() {
+        LeaveTransferRequest dto = new LeaveTransferRequest();
+        dto.setToUserId(0L);
+        assertHasViolation(dto, "转派目标用户ID必须为正整数");
+    }
+
+    @Test
+    @DisplayName("转派：toUserId=-1 → violation")
+    void leaveTransfer_toUserIdNegative() {
+        LeaveTransferRequest dto = new LeaveTransferRequest();
+        dto.setToUserId(-1L);
+        assertHasViolation(dto, "转派目标用户ID必须为正整数");
     }
 
     // ======================== TradeRequest ========================
@@ -160,6 +202,30 @@ class RequestDtoValidationTest {
         assertHasViolation(dto, "价格必须大于0");
     }
 
+    @Test
+    @DisplayName("交易：portfolioId=0 → violation")
+    void tradeRequest_portfolioIdZero() {
+        TradeRequest dto = new TradeRequest();
+        dto.setPortfolioId(0L);
+        dto.setAssetId(1L);
+        dto.setTradeType("BUY");
+        dto.setQuantity(new BigDecimal("10"));
+        dto.setPrice(new BigDecimal("100.0000"));
+        assertHasViolation(dto, "组合ID必须为正整数");
+    }
+
+    @Test
+    @DisplayName("交易：assetId=-1 → violation")
+    void tradeRequest_assetIdNegative() {
+        TradeRequest dto = new TradeRequest();
+        dto.setPortfolioId(1L);
+        dto.setAssetId(-1L);
+        dto.setTradeType("BUY");
+        dto.setQuantity(new BigDecimal("10"));
+        dto.setPrice(new BigDecimal("100.0000"));
+        assertHasViolation(dto, "资产标的ID必须为正整数");
+    }
+
     // ======================== DividendRequest ========================
 
     @Test
@@ -185,6 +251,32 @@ class RequestDtoValidationTest {
         dto.setPerShare(new BigDecimal("1.0000"));
         dto.setQuantity(new BigDecimal("10.000000"));
         assertHasViolation(dto, "派息日不能为空");
+    }
+
+    @Test
+    @DisplayName("股息：portfolioId=0 → violation")
+    void dividendRequest_portfolioIdZero() {
+        DividendRequest dto = new DividendRequest();
+        dto.setPortfolioId(0L);
+        dto.setAssetId(1L);
+        dto.setAmount(new BigDecimal("100.00"));
+        dto.setPerShare(new BigDecimal("1.0000"));
+        dto.setQuantity(new BigDecimal("10.000000"));
+        dto.setDividendDate(LocalDate.of(2026, 6, 30));
+        assertHasViolation(dto, "组合ID必须为正整数");
+    }
+
+    @Test
+    @DisplayName("股息：assetId=-1 → violation")
+    void dividendRequest_assetIdNegative() {
+        DividendRequest dto = new DividendRequest();
+        dto.setPortfolioId(1L);
+        dto.setAssetId(-1L);
+        dto.setAmount(new BigDecimal("100.00"));
+        dto.setPerShare(new BigDecimal("1.0000"));
+        dto.setQuantity(new BigDecimal("10.000000"));
+        dto.setDividendDate(LocalDate.of(2026, 6, 30));
+        assertHasViolation(dto, "资产标的ID必须为正整数");
     }
 
     // ======================== AssetPriceUpdate ========================
