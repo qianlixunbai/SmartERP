@@ -68,6 +68,13 @@ public class LeaveController {
 
     @PostMapping("/api/leave/repair")
     public Result<Integer> repairStuckRequests() {
+        User user = userService.getLoginUser();
+        if (user == null) {
+            throw new BusinessException(401, "请先登录");
+        }
+        if (!"MANAGER".equals(user.getRole())) {
+            throw new BusinessException(403, "无权限");
+        }
         int count = leaveService.repairStuckRequests();
         return Result.success(count, "已修复 " + count + " 条滞留申请");
     }
