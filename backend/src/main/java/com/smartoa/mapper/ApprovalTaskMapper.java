@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.smartoa.entity.ApprovalTask;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 @Mapper
@@ -23,4 +24,13 @@ public interface ApprovalTaskMapper extends BaseMapper<ApprovalTask> {
             "  AND status = 'PENDING'")
     int skipPendingByRequestAndNode(@Param("requestId") Long requestId,
                                     @Param("nodeId") Long nodeId);
+
+    /**
+     * 统计指定请假申请中某审批人的任务数（含 PENDING/COMPLETED/SKIPPED）
+     * 用于判断用户是否为有相关审批任务的审批人
+     */
+    @Select("SELECT COUNT(*) FROM approval_task " +
+            "WHERE leave_request_id = #{requestId} AND approver_id = #{approverId}")
+    int countByLeaveRequestIdAndApproverId(@Param("requestId") Long requestId,
+                                           @Param("approverId") Long approverId);
 }
