@@ -44,9 +44,14 @@ class TemplateVersionSchemaMigrationIntegrationTest {
         mysql = new MySQLContainer<>(MYSQL_IMAGE)
                 .withDatabaseName("smarterp_test_tv")
                 .withUsername("test")
-                .withPassword("test")
-                // Force UTF-8 for init scripts and server — prevents Chinese garbled text
-                .withCommand("--character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci");
+                .withPassword("test");
+
+        // Mount MySQL config BEFORE init scripts so charset is set for fixtures
+        Path myCnfPath = resolvePath("backend/src/test/resources/sql/my.cnf");
+        mysql.withCopyFileToContainer(
+                MountableFile.forHostPath(myCnfPath),
+                "/etc/mysql/conf.d/my.cnf"
+        );
 
         // Mount pre-schema init script
         Path preSchemaPath = resolvePath("backend/src/test/resources/sql/template-versioning-pre-schema.sql");
