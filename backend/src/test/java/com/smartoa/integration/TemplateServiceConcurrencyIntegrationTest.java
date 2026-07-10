@@ -214,11 +214,15 @@ class TemplateServiceConcurrencyIntegrationTest {
                         "Exactly one must succeed, got t1=" + t1Success + " t2=" + t2Success);
 
                 if (t1Success) {
-                    assertTrue(exception2.get() instanceof BusinessException);
-                    assertEquals(409, ((BusinessException) exception2.get()).getCode().intValue());
+                    BusinessException be = (BusinessException) exception2.get();
+                    assertEquals(409, be.getCode().intValue());
+                    assertEquals("该模板已有草稿版本", be.getMessage(),
+                            "Second thread must find existing DRAFT after re-reading under lock");
                 } else {
-                    assertTrue(exception1.get() instanceof BusinessException);
-                    assertEquals(409, ((BusinessException) exception1.get()).getCode().intValue());
+                    BusinessException be = (BusinessException) exception1.get();
+                    assertEquals(409, be.getCode().intValue());
+                    assertEquals("该模板已有草稿版本", be.getMessage(),
+                            "Second thread must find existing DRAFT after re-reading under lock");
                 }
 
                 // 数据库只有一个 DRAFT
@@ -463,34 +467,6 @@ class TemplateServiceConcurrencyIntegrationTest {
                     "SELECT COUNT(*) FROM template_field WHERE template_id IN (SELECT id FROM approval_template WHERE template_key = 'ROLLBACK_KEY')",
                     Long.class);
             assertEquals(1L, fieldCount, "No new fields after rollback");
-        }
-    }
-
-    // ==================== 5. 并发复制已覆盖状态重新判断 ====================
-
-    @Nested
-    @DisplayName("锁定后状态重新判断（并发复制已覆盖）")
-    class StateRecheckAfterLock {
-        // Testcase 1 (两个并发复制请求) 已覆盖本场景。
-        // 在并发复制中，第二个获得锁的线程发现 DRAFT 已存在并返回 409，
-        // 证明：
-        //   1. 锁定后正确重新读取并判断了状态
-        //   2. 不会同时创建两个 DRAFT
-        //   3. 锁范围内的检查是有效的
-
-        @Test
-        @DisplayName("并发复制中第二个请求在锁后发现已有 DRAFT 并正确拒绝")
-        void stateIsRecheckedUnderLock() {
-            // 由 ConcurrentCopy 场景覆盖 — 此处提供文档性测试
-            // 当两个线程调用 createDraftFromVersion 时：
-            //   - 第一个线程获得 source 锁和 versionsByKey 锁
-            //   - 第一个线程完成插入
-            //   - 第二个线程获得锁后重新读取 allVersions
-            //   - 第二个线程发现 DRAFT 已存在并抛出 409
-            //
-            // 如果未重新判断，两个线程都会完成并违反唯一约束。
-            // ConcurrentCopy 测试已证明该场景正确工作。
-            assertTrue(true);
         }
     }
 
