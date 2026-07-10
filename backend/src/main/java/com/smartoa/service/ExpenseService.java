@@ -8,8 +8,6 @@ import com.smartoa.entity.*;
 import com.smartoa.mapper.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +27,7 @@ public class ExpenseService {
     private final UserMapper userMapper;
     private final AuditLogMapper auditLogMapper;
     private final AccountingService accountingService;
+    private final ApprovalConditionEvaluator conditionEvaluator;
 
     // ========== 提交 ==========
 
@@ -285,7 +284,7 @@ public class ExpenseService {
 
         for (int i = startIndex; i < nodes.size(); i++) {
             ApprovalNode node = nodes.get(i);
-            if (evaluateCondition(node.getConditionExpression(), request)) {
+            if (conditionEvaluator.evaluateExpense(node.getConditionExpression(), request)) {
                 List<Long> approverIds = resolveApprovers(node, applicant);
 
                 if (approverIds == null || approverIds.isEmpty()) {
@@ -335,28 +334,6 @@ public class ExpenseService {
 
     private boolean isParallel(ApprovalNode node) {
         return "COUNTER_SIGN".equals(node.getSignType()) || "OR_SIGN".equals(node.getSignType());
-    }
-
-    /**
-     * SpEL条件求值 — 经费版本，暴露 amount 和 category
-     */
-    public record ExpenseConditionVars(BigDecimal amount, String category) {}
-
-    private boolean evaluateCondition(String expression, ExpenseRequest request) {
-        if (expression == null || expression.isBlank()) {
-            return true;
-        }
-        try {
-            ExpenseConditionVars vars = new ExpenseConditionVars(
-                    request.getAmount(), request.getCategory());
-            StandardEvaluationContext ctx = new StandardEvaluationContext(vars);
-            Boolean result = new SpelExpressionParser()
-                    .parseExpression(expression).getValue(ctx, Boolean.class);
-            return Boolean.TRUE.equals(result);
-        } catch (Exception e) {
-            log.warn("SpEL求值失败: expr='{}' — {}", expression, e.getMessage());
-            return true;
-        }
     }
 
     private List<Long> resolveApprovers(ApprovalNode node, User applicant) {

@@ -16,13 +16,10 @@ import com.smartoa.mapper.LeaveRequestMapper;
 import com.smartoa.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -40,6 +37,7 @@ public class LeaveService {
     private final ApprovalNodeMapper approvalNodeMapper;
     private final ApprovalTaskMapper approvalTaskMapper;
     private final UserMapper userMapper;
+    private final ApprovalConditionEvaluator conditionEvaluator;
 
     @Transactional
     public LeaveRequest submitLeave(Long applicantId, LeaveSubmitRequest dto) {
@@ -208,7 +206,7 @@ public class LeaveService {
 
         for (int i = startIndex; i < nodes.size(); i++) {
             ApprovalNode node = nodes.get(i);
-            if (evaluateCondition(node.getConditionExpression(), request)) {
+            if (conditionEvaluator.evaluateLeave(node.getConditionExpression(), request)) {
                 List<Long> approverIds = resolveApprovers(node, applicant);
 
                 // 审批人为空时跳过该节点，继续下一个
@@ -248,29 +246,6 @@ public class LeaveService {
 
     private boolean isParallel(ApprovalNode node) {
         return "COUNTER_SIGN".equals(node.getSignType()) || "OR_SIGN".equals(node.getSignType());
-    }
-
-    public record ConditionVars(String leaveType, long days,
-                                 java.time.LocalDate startDate, java.time.LocalDate endDate) {}
-
-    private boolean evaluateCondition(String expression, LeaveRequest request) {
-        if (expression == null || expression.isBlank()) {
-            return true;
-        }
-        try {
-            long days = ChronoUnit.DAYS.between(request.getStartDate(), request.getEndDate()) + 1;
-            ConditionVars vars = new ConditionVars(
-                    request.getLeaveType(), days,
-                    request.getStartDate(), request.getEndDate());
-            StandardEvaluationContext ctx = new StandardEvaluationContext(vars);
-            Boolean result = new SpelExpressionParser()
-                    .parseExpression(expression).getValue(ctx, Boolean.class);
-            log.debug("condition eval: expr='{}' days={} leaveType={} => {}", expression, days, request.getLeaveType(), result);
-            return Boolean.TRUE.equals(result);
-        } catch (Exception e) {
-            log.warn("condition eval error: expr='{}' — {}", expression, e.getMessage());
-            return true;
-        }
     }
 
     /**

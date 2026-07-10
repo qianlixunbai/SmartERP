@@ -46,7 +46,8 @@ class LeaveServiceRejectionCleanupTest {
                 approvalRecordMapper,
                 approvalNodeMapper,
                 approvalTaskMapper,
-                userMapper
+                userMapper,
+                new ApprovalConditionEvaluator()
         );
     }
 

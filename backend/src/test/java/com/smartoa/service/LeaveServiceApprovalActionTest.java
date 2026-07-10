@@ -38,6 +38,9 @@ class LeaveServiceApprovalActionTest {
     @Mock
     private UserMapper userMapper;
 
+    @Mock
+    private ApprovalConditionEvaluator conditionEvaluator;
+
     @InjectMocks
     private LeaveService leaveService;
 

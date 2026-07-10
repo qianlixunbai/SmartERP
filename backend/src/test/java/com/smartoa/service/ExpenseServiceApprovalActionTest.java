@@ -42,6 +42,9 @@ class ExpenseServiceApprovalActionTest {
     @Mock
     private AccountingService accountingService;
 
+    @Mock
+    private ApprovalConditionEvaluator conditionEvaluator;
+
     @InjectMocks
     private ExpenseService expenseService;
 

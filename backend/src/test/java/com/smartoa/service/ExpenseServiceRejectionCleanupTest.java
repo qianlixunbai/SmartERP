@@ -54,7 +54,8 @@ class ExpenseServiceRejectionCleanupTest {
                 approvalNodeMapper,
                 userMapper,
                 auditLogMapper,
-                accountingService
+                accountingService,
+                new ApprovalConditionEvaluator()
         );
     }
 
