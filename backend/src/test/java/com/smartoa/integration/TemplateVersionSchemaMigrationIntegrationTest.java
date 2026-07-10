@@ -117,6 +117,8 @@ class TemplateVersionSchemaMigrationIntegrationTest {
         for (String statement : splitStatements(sql)) {
             String trimmed = statement.trim();
             if (trimmed.isEmpty()) continue;
+            // Skip USE statements — we are already connected to the correct database
+            if (trimmed.toUpperCase().startsWith("USE ")) continue;
             try (Statement stmt = connection.createStatement()) {
                 stmt.execute(trimmed);
             } catch (SQLException e) {
