@@ -168,7 +168,42 @@ cd backend && ./mvnw test
 - MySQL 8.0+
 - Node.js 18+ / pnpm
 
-### 1. 建库
+### 1. 配置环境变量
+
+启动前需要配置以下环境变量。复制示例文件并根据你的环境修改：
+
+**Windows PowerShell:**
+```powershell
+Copy-Item .env.example .env
+# 编辑 .env 文件，填入你的数据库密码和 JWT 密钥
+# 然后加载变量（或重启终端）:
+Get-Content .env | ForEach-Object {
+    if ($_ -match '^\s*([^#][^=]+)=(.*)$') {
+        [Environment]::SetEnvironmentVariable($matches[1], $matches[2].Trim(), 'User')
+    }
+}
+```
+
+**Windows 命令行 / Git Bash:**
+```bash
+cp .env.example .env
+# 编辑 .env 文件，填入你的数据库密码和 JWT 密钥
+# 可通过 IDE（IntelliJ / VS Code）设置环境变量，或使用系统环境变量面板
+```
+
+**所需环境变量：**
+
+| 变量 | 说明 | 示例值 |
+|------|------|--------|
+| `SMARTERP_DB_URL` | 数据库连接 URL | `jdbc:mysql://localhost:3306/smarterp?...` |
+| `SMARTERP_DB_USERNAME` | 数据库用户名 | `root` |
+| `SMARTERP_DB_PASSWORD` | 数据库密码 | （你的密码） |
+| `SMARTERP_JWT_SECRET` | JWT 签名密钥（≥32 字符） | （生成一个强随机字符串） |
+| `SMARTERP_JWT_EXPIRATION` | Token 过期时间（毫秒） | `86400000`（默认 24h） |
+
+> **注意：** 生产环境（`SPRING_PROFILES_ACTIVE=prod`）下，`SMARTERP_DB_URL`、`SMARTERP_DB_USERNAME`、`SMARTERP_DB_PASSWORD`、`SMARTERP_JWT_SECRET` 为**必填项**，缺失会导致启动失败。开发环境有默认值，但不应在生产中使用。
+
+### 2. 建库
 
 ```sql
 CREATE DATABASE smarterp DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -177,25 +212,32 @@ CREATE DATABASE smarterp DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_c
 然后依次导入 `docs/` 下的 SQL 脚本：
 
 ```bash
-mysql -u root -p123456 --default-character-set=utf8mb4 < docs/mysql-p0-upgrade.sql
-mysql -u root -p123456 --default-character-set=utf8mb4 smarterp < docs/mysql-p1-upgrade.sql
-mysql -u root -p123456 --default-character-set=utf8mb4 smarterp < docs/mysql-p2a-bcrypt.sql
-mysql -u root -p123456 --default-character-set=utf8mb4 smarterp < docs/mysql-p2b-parallel.sql
-mysql -u root -p123456 --default-character-set=utf8mb4 smarterp < docs/mysql-p2c-timeout.sql
-mysql -u root -p123456 --default-character-set=utf8mb4 smarterp < docs/mysql-p3-expense.sql
-mysql -u root -p123456 --default-character-set=utf8mb4 smarterp < docs/mysql-p7-accounting.sql
-mysql -u root -p123456 --default-character-set=utf8mb4 smarterp < docs/mysql-p8-portfolio.sql
+# Windows PowerShell
+Get-ChildItem docs/mysql-p*.sql | Sort-Object Name | ForEach-Object {
+    Get-Content $_ | mysql -u root -p smarterp --default-character-set=utf8mb4
+}
+
+# Git Bash / Linux / macOS
+for f in docs/mysql-p*.sql; do
+    mysql -u root -p smarterp --default-character-set=utf8mb4 < "$f"
+done
 ```
 
-### 2. 启动后端
+### 3. 启动后端
 
 ```bash
-cd backend && ./mvnw spring-boot:run
+cd backend
+
+# Windows (Maven Wrapper)
+mvnw.cmd spring-boot:run
+
+# Git Bash / Linux / macOS
+./mvnw spring-boot:run
 ```
 
 默认端口 `8080`。
 
-### 3. 启动前端
+### 4. 启动前端
 
 ```bash
 cd frontend
@@ -205,15 +247,17 @@ pnpm run dev
 
 默认端口 `5173`，已配置代理转发到后端。
 
-### 4. 登录
+### 5. 登录
 
 浏览器打开 `http://localhost:5173`，使用以下账户登录：
 
 | 用户名 | 密码 | 角色 | 说明 |
 |--------|------|------|------|
-| admin | 123456 | MANAGER | 技术部经理（无直属领导） |
-| zhangsan | 123456 | EMPLOYEE | 普通员工（直属领导=admin） |
-| lisi | 123456 | EMPLOYEE | 产品部员工 |
+| admin | （见数据库 `sys_user` 表） | MANAGER | 技术部经理（无直属领导） |
+| zhangsan | （见数据库 `sys_user` 表） | EMPLOYEE | 普通员工（直属领导=admin） |
+| lisi | （见数据库 `sys_user` 表） | EMPLOYEE | 产品部员工 |
+
+> 默认密码由 `docs/mysql-p2a-bcrypt.sql` 初始化，请查看该脚本中的 BCrypt 哈希对应的明文密码。
 
 ---
 
