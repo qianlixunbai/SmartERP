@@ -1,6 +1,11 @@
 package com.smartoa.validation;
 
-import org.junit.jupiter.api.BeforeEach;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -8,22 +13,44 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * {@link SafeAttachmentUrlValidator} 单元测试。
+ * {@link SafeAttachmentUrl} 注解通过 Jakarta Bean Validation 验证测试。
  *
  * <p>不启动 Spring Context，不连接数据库。</p>
  */
-@DisplayName("SafeAttachmentUrlValidator 单元测试")
+@DisplayName("SafeAttachmentUrl Jakarta Validator 测试")
 class SafeAttachmentUrlValidatorTest {
 
-    private SafeAttachmentUrlValidator validator;
+    private static ValidatorFactory factory;
+    private static Validator validator;
 
-    @BeforeEach
-    void setUp() {
-        validator = new SafeAttachmentUrlValidator();
+    @BeforeAll
+    static void setUpValidator() {
+        factory = Validation.buildDefaultValidatorFactory();
+        validator = factory.getValidator();
+    }
+
+    @AfterAll
+    static void closeFactory() {
+        factory.close();
+    }
+
+    /**
+     * 测试载体，仅包含 receiptUrl 字段。
+     */
+    private static class AttachmentUrlFixture {
+
+        @SafeAttachmentUrl
+        private String receiptUrl;
+
+        AttachmentUrlFixture(String receiptUrl) {
+            this.receiptUrl = receiptUrl;
+        }
     }
 
     // ======================== 有效值 ========================
@@ -37,49 +64,65 @@ class SafeAttachmentUrlValidatorTest {
         @ValueSource(strings = {""})
         @DisplayName("null 和空字符串 → 合法")
         void nullAndEmpty(String value) {
-            assertTrue(validator.isValid(value, null));
+            Set<ConstraintViolation<AttachmentUrlFixture>> violations =
+                    validator.validate(new AttachmentUrlFixture(value));
+            assertTrue(violations.isEmpty());
         }
 
         @Test
         @DisplayName("HTTPS URL → 合法")
         void httpsUrl() {
-            assertTrue(validator.isValid("https://example.com/receipts/2026/001.pdf", null));
+            Set<ConstraintViolation<AttachmentUrlFixture>> violations =
+                    validator.validate(new AttachmentUrlFixture("https://example.com/receipts/2026/001.pdf"));
+            assertTrue(violations.isEmpty());
         }
 
         @Test
         @DisplayName("HTTP localhost → 合法")
         void httpLocalhost() {
-            assertTrue(validator.isValid("http://localhost:3000/uploads/test.pdf", null));
+            Set<ConstraintViolation<AttachmentUrlFixture>> violations =
+                    validator.validate(new AttachmentUrlFixture("http://localhost:3000/uploads/test.pdf"));
+            assertTrue(violations.isEmpty());
         }
 
         @Test
         @DisplayName("带端口 → 合法")
         void withPort() {
-            assertTrue(validator.isValid("https://example.com:8080/path/file.pdf", null));
+            Set<ConstraintViolation<AttachmentUrlFixture>> violations =
+                    validator.validate(new AttachmentUrlFixture("https://example.com:8080/path/file.pdf"));
+            assertTrue(violations.isEmpty());
         }
 
         @Test
         @DisplayName("带 query → 合法")
         void withQuery() {
-            assertTrue(validator.isValid("https://cdn.example.com/a.png?token=abc", null));
+            Set<ConstraintViolation<AttachmentUrlFixture>> violations =
+                    validator.validate(new AttachmentUrlFixture("https://cdn.example.com/a.png?token=abc"));
+            assertTrue(violations.isEmpty());
         }
 
         @Test
         @DisplayName("带 fragment → 合法")
         void withFragment() {
-            assertTrue(validator.isValid("https://example.com/path/file.pdf#page=1", null));
+            Set<ConstraintViolation<AttachmentUrlFixture>> violations =
+                    validator.validate(new AttachmentUrlFixture("https://example.com/path/file.pdf#page=1"));
+            assertTrue(violations.isEmpty());
         }
 
         @Test
         @DisplayName("scheme 大写 HTTPS → 合法")
         void uppercaseScheme() {
-            assertTrue(validator.isValid("HTTPS://example.com/a.pdf", null));
+            Set<ConstraintViolation<AttachmentUrlFixture>> violations =
+                    validator.validate(new AttachmentUrlFixture("HTTPS://example.com/a.pdf"));
+            assertTrue(violations.isEmpty());
         }
 
         @Test
         @DisplayName("scheme 混合大小写 Https → 合法")
         void mixedCaseScheme() {
-            assertTrue(validator.isValid("Https://example.com/a.pdf", null));
+            Set<ConstraintViolation<AttachmentUrlFixture>> violations =
+                    validator.validate(new AttachmentUrlFixture("Https://example.com/a.pdf"));
+            assertTrue(violations.isEmpty());
         }
     }
 
@@ -92,133 +135,157 @@ class SafeAttachmentUrlValidatorTest {
         @Test
         @DisplayName("纯空格 → 非法")
         void onlySpaces() {
-            assertFalse(validator.isValid("   ", null));
+            assertViolation("   ");
         }
 
         @Test
         @DisplayName("前导空格 → 非法")
         void leadingSpace() {
-            assertFalse(validator.isValid(" https://example.com/a.pdf", null));
+            assertViolation(" https://example.com/a.pdf");
         }
 
         @Test
         @DisplayName("尾随空格 → 非法")
         void trailingSpace() {
-            assertFalse(validator.isValid("https://example.com/a.pdf ", null));
+            assertViolation("https://example.com/a.pdf ");
         }
 
         @Test
         @DisplayName("javascript: → 非法")
         void javascript() {
-            assertFalse(validator.isValid("javascript:alert(1)", null));
+            assertViolation("javascript:alert(1)");
         }
 
         @Test
         @DisplayName("JAVASCRIPT: → 非法")
         void uppercaseJavascript() {
-            assertFalse(validator.isValid("JAVASCRIPT:alert(1)", null));
+            assertViolation("JAVASCRIPT:alert(1)");
         }
 
         @Test
         @DisplayName("data: → 非法")
         void dataUri() {
-            assertFalse(validator.isValid("data:text/plain,test", null));
+            assertViolation("data:text/plain,test");
         }
 
         @Test
         @DisplayName("file: → 非法")
         void fileUri() {
-            assertFalse(validator.isValid("file:///tmp/a.pdf", null));
+            assertViolation("file:///tmp/a.pdf");
         }
 
         @Test
         @DisplayName("ftp: → 非法")
         void ftpUri() {
-            assertFalse(validator.isValid("ftp://example.com/a.pdf", null));
+            assertViolation("ftp://example.com/a.pdf");
         }
 
         @Test
         @DisplayName("jar: → 非法")
         void jarUri() {
-            assertFalse(validator.isValid("jar:https://example.com/a.jar!/x", null));
+            assertViolation("jar:https://example.com/a.jar!/x");
         }
 
         @Test
         @DisplayName("mailto: → 非法")
         void mailtoUri() {
-            assertFalse(validator.isValid("mailto:user@example.com", null));
+            assertViolation("mailto:user@example.com");
         }
 
         @Test
         @DisplayName("vbscript: → 非法")
         void vbscriptUri() {
-            assertFalse(validator.isValid("vbscript:msgbox(1)", null));
+            assertViolation("vbscript:msgbox(1)");
         }
 
         @Test
         @DisplayName("protocol-relative //evil.example.com/a.pdf → 非法")
         void protocolRelative() {
-            assertFalse(validator.isValid("//evil.example.com/a.pdf", null));
+            assertViolation("//evil.example.com/a.pdf");
         }
 
         @Test
         @DisplayName("根相对路径 /example/file.pdf → 非法")
         void rootRelative() {
-            assertFalse(validator.isValid("/example/file.pdf", null));
+            assertViolation("/example/file.pdf");
         }
 
         @Test
         @DisplayName("普通相对路径 uploads/file.pdf → 非法")
         void relativePath() {
-            assertFalse(validator.isValid("uploads/file.pdf", null));
+            assertViolation("uploads/file.pdf");
         }
 
         @Test
         @DisplayName("无 scheme 域名 example.com/file.pdf → 非法")
         void noScheme() {
-            assertFalse(validator.isValid("example.com/file.pdf", null));
+            assertViolation("example.com/file.pdf");
         }
 
         @Test
         @DisplayName("缺少 host（https://）→ 非法")
         void missingHost() {
-            assertFalse(validator.isValid("https://", null));
+            assertViolation("https://");
         }
 
         @Test
         @DisplayName("userInfo https://user:pass@example.com/a.pdf → 非法")
         void withUserInfo() {
-            assertFalse(validator.isValid("https://user:pass@example.com/a.pdf", null));
+            assertViolation("https://user:pass@example.com/a.pdf");
         }
 
         @Test
         @DisplayName("反斜杠 https:\\example.com\\a.pdf → 非法")
         void backslash() {
-            assertFalse(validator.isValid("https:\\example.com\\a.pdf", null));
+            assertViolation("https:\\example.com\\a.pdf");
         }
 
         @Test
         @DisplayName("包含 CR → 非法")
         void withCarriageReturn() {
-            assertFalse(validator.isValid("https://example.com/a\r.pdf", null));
+            assertViolation("https://example.com/a\r.pdf");
         }
 
         @Test
         @DisplayName("包含 LF → 非法")
         void withLineFeed() {
-            assertFalse(validator.isValid("https://example.com/a\n.pdf", null));
+            assertViolation("https://example.com/a\n.pdf");
         }
 
         @Test
         @DisplayName("包含 TAB → 非法")
         void withTab() {
-            assertFalse(validator.isValid("https://example.com/a\t.pdf", null));
+            assertViolation("https://example.com/a\t.pdf");
         }
 
         @Test
         @DisplayName("畸形 URI → 非法")
         void malformedUri() {
-            assertFalse(validator.isValid("https://[invalid", null));
+            assertViolation("https://[invalid");
+        }
+
+        /**
+         * 通用断言方法：验证非法值产生正确的 violation。
+         */
+        private void assertViolation(String value) {
+            Set<ConstraintViolation<AttachmentUrlFixture>> violations =
+                    validator.validate(new AttachmentUrlFixture(value));
+
+            assertEquals(1, violations.size(), "应恰好产生1个 violation");
+
+            ConstraintViolation<?> violation = violations.iterator().next();
+
+            assertEquals(
+                    "附件URL仅允许有效的HTTP或HTTPS地址",
+                    violation.getMessage(),
+                    "violation message 不匹配"
+            );
+
+            assertEquals(
+                    "receiptUrl",
+                    violation.getPropertyPath().toString(),
+                    "property path 不匹配"
+            );
         }
     }
 }
