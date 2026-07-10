@@ -385,7 +385,7 @@ public class ExpenseService {
                 .collect(Collectors.toList());
     }
 
-    private void skipPendingTasks(Long requestId, Long nodeId) {
+    void skipPendingTasks(Long requestId, Long nodeId) {
         if (nodeId != null) {
             expenseApprovalTaskMapper.update(null,
                     new LambdaUpdateWrapper<ExpenseApprovalTask>()

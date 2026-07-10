@@ -505,7 +505,7 @@ public class LeaveService {
         }
     }
 
-    private void skipPendingTasks(Long requestId, Long nodeId) {
+    void skipPendingTasks(Long requestId, Long nodeId) {
         if (nodeId != null) {
             approvalTaskMapper.update(null,
                     new LambdaUpdateWrapper<ApprovalTask>()
