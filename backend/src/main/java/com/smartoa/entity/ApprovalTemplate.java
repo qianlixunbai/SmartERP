@@ -31,4 +31,30 @@ public class ApprovalTemplate {
 
     @TableField("update_time")
     private LocalDateTime updateTime;
+
+    // ======== P9 模板版本化新增字段 ========
+
+    @TableField("template_key")
+    private String templateKey;
+
+    @TableField("version_no")
+    private Integer versionNo;
+
+    @TableField("workflow_type")
+    private String workflowType;
+
+    @TableField("lifecycle_status")
+    private String lifecycleStatus;
+
+    @TableField("published_at")
+    private LocalDateTime publishedAt;
+
+    @TableField("retired_at")
+    private LocalDateTime retiredAt;
+
+    @TableField("supersedes_id")
+    private Long supersedesId;
+
+    @TableField("revision")
+    private Integer revision;
 }

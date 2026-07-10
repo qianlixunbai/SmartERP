@@ -72,9 +72,9 @@ jobs:
           docker version
           docker info
 
-      - name: Run Testcontainers MySQL integration test
+      - name: Run Testcontainers MySQL integration tests
         working-directory: backend
-        run: ./mvnw -B -ntp -Dtest=StabilizationMapperIntegrationTest test
+        run: ./mvnw -B -ntp -Dtest=StabilizationMapperIntegrationTest,TemplateVersionSchemaMigrationIntegrationTest test
 
       - name: Upload Surefire reports
         if: always()

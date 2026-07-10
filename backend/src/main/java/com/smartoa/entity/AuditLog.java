@@ -39,4 +39,9 @@ public class AuditLog {
 
     @TableField("create_time")
     private LocalDateTime createTime;
+
+    // ======== P9 模板版本化新增字段 ========
+
+    @TableField("node_id")
+    private Long nodeId;
 }
