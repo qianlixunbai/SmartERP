@@ -364,14 +364,145 @@ class RequestValidationHttpTest {
         }
 
         @Test
-        @DisplayName("合法非HTTP协议URL → 200（本轮不校验协议）")
-        void nonHttpUrlAccepted() throws Exception {
+        @DisplayName("非HTTP协议URL ftp:// → 400，Service 无交互")
+        void nonHttpUrlRejected() throws Exception {
             expenseMvc.perform(post("/api/expense/submit")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{\"category\":\"办公\",\"amount\":100.00,\"receiptUrl\":\"ftp://files.example.com/receipt.pdf\"}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value(400))
+                    .andExpect(jsonPath("$.message").value("附件URL仅允许有效的HTTP或HTTPS地址"));
+            verify(expenseService, never()).submitExpense(any(), any());
+        }
+
+        @Test
+        @DisplayName("javascript: URL → 400，Service 无交互")
+        void javascriptUrlRejected() throws Exception {
+            expenseMvc.perform(post("/api/expense/submit")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"category\":\"办公\",\"amount\":100.00,\"receiptUrl\":\"javascript:alert(1)\"}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value(400))
+                    .andExpect(jsonPath("$.message").value("附件URL仅允许有效的HTTP或HTTPS地址"));
+            verify(expenseService, never()).submitExpense(any(), any());
+        }
+
+        @Test
+        @DisplayName("data: URL → 400，Service 无交互")
+        void dataUrlRejected() throws Exception {
+            expenseMvc.perform(post("/api/expense/submit")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"category\":\"办公\",\"amount\":100.00,\"receiptUrl\":\"data:text/plain,test\"}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value(400))
+                    .andExpect(jsonPath("$.message").value("附件URL仅允许有效的HTTP或HTTPS地址"));
+            verify(expenseService, never()).submitExpense(any(), any());
+        }
+
+        @Test
+        @DisplayName("file: URL → 400，Service 无交互")
+        void fileUrlRejected() throws Exception {
+            expenseMvc.perform(post("/api/expense/submit")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"category\":\"办公\",\"amount\":100.00,\"receiptUrl\":\"file:///tmp/a.pdf\"}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value(400))
+                    .andExpect(jsonPath("$.message").value("附件URL仅允许有效的HTTP或HTTPS地址"));
+            verify(expenseService, never()).submitExpense(any(), any());
+        }
+
+        @Test
+        @DisplayName("protocol-relative URL → 400，Service 无交互")
+        void protocolRelativeRejected() throws Exception {
+            expenseMvc.perform(post("/api/expense/submit")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"category\":\"办公\",\"amount\":100.00,\"receiptUrl\":\"//evil.example.com/a.pdf\"}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value(400))
+                    .andExpect(jsonPath("$.message").value("附件URL仅允许有效的HTTP或HTTPS地址"));
+            verify(expenseService, never()).submitExpense(any(), any());
+        }
+
+        @Test
+        @DisplayName("相对路径 → 400，Service 无交互")
+        void relativePathRejected() throws Exception {
+            expenseMvc.perform(post("/api/expense/submit")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"category\":\"办公\",\"amount\":100.00,\"receiptUrl\":\"/uploads/a.pdf\"}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value(400))
+                    .andExpect(jsonPath("$.message").value("附件URL仅允许有效的HTTP或HTTPS地址"));
+            verify(expenseService, never()).submitExpense(any(), any());
+        }
+
+        @Test
+        @DisplayName("userInfo URL → 400，Service 无交互")
+        void userInfoRejected() throws Exception {
+            expenseMvc.perform(post("/api/expense/submit")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"category\":\"办公\",\"amount\":100.00,\"receiptUrl\":\"https://user:pass@example.com/a.pdf\"}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value(400))
+                    .andExpect(jsonPath("$.message").value("附件URL仅允许有效的HTTP或HTTPS地址"));
+            verify(expenseService, never()).submitExpense(any(), any());
+        }
+
+        @Test
+        @DisplayName("HTTPS 合法 URL → 200，Service 收到原始值")
+        void httpsUrlAccepted() throws Exception {
+            String url = "https://example.com/receipt.pdf";
+            expenseMvc.perform(post("/api/expense/submit")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"category\":\"办公\",\"amount\":100.00,\"receiptUrl\":\"" + url + "\"}"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.code").value(200));
+            verify(expenseService).submitExpense(eq(1L), argThat(dto -> url.equals(dto.getReceiptUrl())));
+        }
+
+        @Test
+        @DisplayName("HTTP localhost 合法 URL → 200，Service 收到原始值")
+        void httpLocalhostAccepted() throws Exception {
+            String url = "http://localhost:3000/uploads/receipt.pdf";
+            expenseMvc.perform(post("/api/expense/submit")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"category\":\"办公\",\"amount\":100.00,\"receiptUrl\":\"" + url + "\"}"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.code").value(200));
+            verify(expenseService).submitExpense(eq(1L), argThat(dto -> url.equals(dto.getReceiptUrl())));
+        }
+
+        @Test
+        @DisplayName("receiptUrl 缺失 → 合法 200")
+        void missingReceiptUrlAccepted() throws Exception {
+            expenseMvc.perform(post("/api/expense/submit")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"category\":\"办公\",\"amount\":100.00}"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(200));
             verify(expenseService).submitExpense(eq(1L), any(ExpenseSubmitRequest.class));
+        }
+
+        @Test
+        @DisplayName("receiptUrl 空字符串 → 合法 200")
+        void emptyReceiptUrlAccepted() throws Exception {
+            expenseMvc.perform(post("/api/expense/submit")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"category\":\"办公\",\"amount\":100.00,\"receiptUrl\":\"\"}"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.code").value(200));
+            verify(expenseService).submitExpense(eq(1L), any(ExpenseSubmitRequest.class));
+        }
+
+        @Test
+        @DisplayName("receiptUrl 纯空格 → 400")
+        void onlySpacesReceiptUrlRejected() throws Exception {
+            expenseMvc.perform(post("/api/expense/submit")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"category\":\"办公\",\"amount\":100.00,\"receiptUrl\":\"   \"}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value(400))
+                    .andExpect(jsonPath("$.message").value("附件URL仅允许有效的HTTP或HTTPS地址"));
+            verify(expenseService, never()).submitExpense(any(), any());
         }
 
         @Test

@@ -1,5 +1,6 @@
 package com.smartoa.dto;
 
+import com.smartoa.validation.SafeAttachmentUrl;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
@@ -26,5 +27,6 @@ public class ExpenseSubmitRequest {
     private String description;
 
     @Size(max = 500, message = "附件URL不能超过500字")
+    @SafeAttachmentUrl
     private String receiptUrl;
 }
