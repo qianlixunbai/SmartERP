@@ -63,7 +63,8 @@ public class TemplateService {
 
     @Transactional
     public void create(ApprovalTemplate template) {
-        validateNewTemplate(template);
+        validateTemplateMetadata(template);
+        validateNewTemplateIdentity(template);
         if (templateMapper.selectCount(new LambdaQueryWrapper<ApprovalTemplate>()
                 .eq(ApprovalTemplate::getTemplateKey, template.getTemplateKey())) > 0) {
             throw templateKeyExists();
@@ -90,6 +91,7 @@ public class TemplateService {
     @Transactional
     public void update(Long id, ApprovalTemplate data) {
         ApprovalTemplate template = requireMutableDraft(id);
+        validateTemplateMetadata(data);
         template.setName(data.getName());
         template.setDescription(data.getDescription());
         template.setEnabled(false);
@@ -221,16 +223,19 @@ public class TemplateService {
                 .orderByAsc(TemplateField::getSortOrder));
     }
 
-    private void validateNewTemplate(ApprovalTemplate template) {
+    private void validateTemplateMetadata(ApprovalTemplate template) {
         if (template == null) {
             throw new BusinessException(400, "模板不能为空");
         }
-        if (template.getName() == null || template.getName().isEmpty() || template.getName().length() > 100) {
+        if (template.getName() == null || template.getName().isBlank() || template.getName().length() > 100) {
             throw new BusinessException(400, "模板名称不能为空且长度不能超过100");
         }
         if (template.getDescription() != null && template.getDescription().length() > 500) {
             throw new BusinessException(400, "模板描述长度不能超过500");
         }
+    }
+
+    private void validateNewTemplateIdentity(ApprovalTemplate template) {
         if (template.getTemplateKey() == null || !TEMPLATE_KEY_PATTERN.matcher(template.getTemplateKey()).matches()) {
             throw new BusinessException(400, "模板标识格式错误");
         }

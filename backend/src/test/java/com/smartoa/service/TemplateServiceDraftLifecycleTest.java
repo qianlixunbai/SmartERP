@@ -16,6 +16,7 @@ import com.smartoa.mapper.TemplateFieldMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
@@ -139,6 +140,30 @@ class TemplateServiceDraftLifecycleTest {
     }
 
     @Test
+    void createRejectsWhitespaceOnlyNameBeforeMapperAccess() {
+        ApprovalTemplate input = validTemplate();
+        input.setName("   ");
+
+        BusinessException error = assertThrows(BusinessException.class, () -> service.create(input));
+
+        assertEquals(400, error.getCode());
+        assertEquals("模板名称不能为空且长度不能超过100", error.getMessage());
+        verifyNoInteractions(templateMapper);
+    }
+
+    @Test
+    void createPreservesNonBlankNameWithoutTrimming() {
+        ApprovalTemplate input = validTemplate();
+        input.setName(" Leave template ");
+        when(templateMapper.selectCount(any())).thenReturn(0L);
+
+        service.create(input);
+
+        assertEquals(" Leave template ", input.getName());
+        verify(templateMapper).insert(input);
+    }
+
+    @Test
     void createRejectsExistingTemplateKeyBeforeInsert() {
         when(templateMapper.selectCount(any())).thenReturn(1L);
 
@@ -214,6 +239,136 @@ class TemplateServiceDraftLifecycleTest {
         service.update(12L, validTemplate());
 
         assertEquals(1, stored.getRevision());
+    }
+
+    @Test
+    void updateRejectsNullDataWithoutMutatingDraft() {
+        ApprovalTemplate stored = draft(12L);
+        stored.setName("stored name");
+        stored.setDescription("stored description");
+        stored.setRevision(4);
+        stored.setUpdateTime(LocalDateTime.MIN);
+        stored.setEnabled(false);
+        when(templateMapper.selectById(12L)).thenReturn(stored);
+
+        BusinessException error = assertThrows(BusinessException.class, () -> service.update(12L, null));
+
+        assertAll(
+                () -> assertEquals(400, error.getCode()),
+                () -> assertEquals("模板不能为空", error.getMessage()),
+                () -> assertEquals("stored name", stored.getName()),
+                () -> assertEquals("stored description", stored.getDescription()),
+                () -> assertEquals(4, stored.getRevision()),
+                () -> assertEquals(LocalDateTime.MIN, stored.getUpdateTime()),
+                () -> assertFalse(stored.isEnabled()));
+        verify(templateMapper, never()).updateById(any(ApprovalTemplate.class));
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", "   "})
+    void updateRejectsNullEmptyAndWhitespaceOnlyNameWithoutMutatingDraft(String invalidName) {
+        ApprovalTemplate stored = draft(12L);
+        stored.setName("stored name");
+        stored.setDescription("stored description");
+        stored.setRevision(4);
+        stored.setUpdateTime(LocalDateTime.MIN);
+        stored.setEnabled(false);
+        ApprovalTemplate data = validTemplate();
+        data.setName(invalidName);
+        data.setDescription("new description");
+        when(templateMapper.selectById(12L)).thenReturn(stored);
+
+        BusinessException error = assertThrows(BusinessException.class, () -> service.update(12L, data));
+
+        assertAll(
+                () -> assertEquals(400, error.getCode()),
+                () -> assertEquals("模板名称不能为空且长度不能超过100", error.getMessage()),
+                () -> assertEquals("stored name", stored.getName()),
+                () -> assertEquals("stored description", stored.getDescription()),
+                () -> assertEquals(4, stored.getRevision()),
+                () -> assertEquals(LocalDateTime.MIN, stored.getUpdateTime()),
+                () -> assertFalse(stored.isEnabled()));
+        verify(templateMapper, never()).updateById(any(ApprovalTemplate.class));
+    }
+
+    @Test
+    void updateRejectsOverlongNameWithoutMutatingDraft() {
+        ApprovalTemplate stored = draft(12L);
+        stored.setName("stored name");
+        stored.setDescription("stored description");
+        stored.setRevision(4);
+        stored.setUpdateTime(LocalDateTime.MIN);
+        ApprovalTemplate data = validTemplate();
+        data.setName("n".repeat(101));
+        when(templateMapper.selectById(12L)).thenReturn(stored);
+
+        BusinessException error = assertThrows(BusinessException.class, () -> service.update(12L, data));
+
+        assertAll(
+                () -> assertEquals(400, error.getCode()),
+                () -> assertEquals("模板名称不能为空且长度不能超过100", error.getMessage()),
+                () -> assertEquals("stored name", stored.getName()),
+                () -> assertEquals("stored description", stored.getDescription()),
+                () -> assertEquals(4, stored.getRevision()),
+                () -> assertEquals(LocalDateTime.MIN, stored.getUpdateTime()));
+        verify(templateMapper, never()).updateById(any(ApprovalTemplate.class));
+    }
+
+    @Test
+    void updateRejectsOverlongDescriptionWithoutMutatingDraft() {
+        ApprovalTemplate stored = draft(12L);
+        stored.setName("stored name");
+        stored.setDescription("stored description");
+        stored.setRevision(4);
+        stored.setUpdateTime(LocalDateTime.MIN);
+        ApprovalTemplate data = validTemplate();
+        data.setName("new name");
+        data.setDescription("d".repeat(501));
+        when(templateMapper.selectById(12L)).thenReturn(stored);
+
+        BusinessException error = assertThrows(BusinessException.class, () -> service.update(12L, data));
+
+        assertAll(
+                () -> assertEquals(400, error.getCode()),
+                () -> assertEquals("模板描述长度不能超过500", error.getMessage()),
+                () -> assertEquals("stored name", stored.getName()),
+                () -> assertEquals("stored description", stored.getDescription()),
+                () -> assertEquals(4, stored.getRevision()),
+                () -> assertEquals(LocalDateTime.MIN, stored.getUpdateTime()));
+        verify(templateMapper, never()).updateById(any(ApprovalTemplate.class));
+    }
+
+    @Test
+    void updateAcceptsMetadataAtLengthBoundaries() {
+        ApprovalTemplate stored = draft(12L);
+        stored.setRevision(4);
+        ApprovalTemplate data = validTemplate();
+        data.setName("n".repeat(100));
+        data.setDescription("d".repeat(500));
+        when(templateMapper.selectById(12L)).thenReturn(stored);
+
+        service.update(12L, data);
+
+        assertAll(
+                () -> assertEquals("n".repeat(100), stored.getName()),
+                () -> assertEquals("d".repeat(500), stored.getDescription()),
+                () -> assertEquals(5, stored.getRevision()),
+                () -> assertNotNull(stored.getUpdateTime()),
+                () -> assertFalse(stored.isEnabled()));
+        verify(templateMapper).updateById(stored);
+    }
+
+    @Test
+    void updatePrioritizesMissingAndImmutableTemplateErrorsOverNullData() {
+        ApprovalTemplate active = active(12L);
+        when(templateMapper.selectById(12L)).thenReturn(active);
+        when(templateMapper.selectById(13L)).thenReturn(null);
+
+        assertAll(
+                () -> assertEquals(409, assertThrows(BusinessException.class, () -> service.update(12L, null)).getCode()),
+                () -> assertEquals(404, assertThrows(BusinessException.class, () -> service.update(13L, null)).getCode()));
+        verify(templateMapper, never()).updateById(any(ApprovalTemplate.class));
     }
 
     @Test
