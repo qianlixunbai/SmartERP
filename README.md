@@ -172,14 +172,18 @@ cd backend && ./mvnw test
 
 启动前需要配置以下环境变量。复制示例文件并根据你的环境修改：
 
+> **注意：** Spring Boot 不会自动读取仓库根目录的 `.env` 文件。
+> 你需要在当前终端、IDE Run Configuration 或系统环境变量中加载这些变量。
+> 以下 PowerShell 示例使用 `Set-Item` 将变量写入**当前进程**，立即生效，无需重启终端。
+
 **Windows PowerShell:**
 ```powershell
 Copy-Item .env.example .env
 # 编辑 .env 文件，填入你的数据库密码和 JWT 密钥
-# 然后加载变量（或重启终端）:
+# 然后加载变量到当前进程（立即生效）:
 Get-Content .env | ForEach-Object {
     if ($_ -match '^\s*([^#][^=]+)=(.*)$') {
-        [Environment]::SetEnvironmentVariable($matches[1], $matches[2].Trim(), 'User')
+        Set-Item -Path "Env:$($matches[1])" -Value $matches[2].Trim()
     }
 }
 ```
@@ -201,7 +205,7 @@ cp .env.example .env
 | `SMARTERP_JWT_SECRET` | JWT 签名密钥（≥32 字符） | （生成一个强随机字符串） |
 | `SMARTERP_JWT_EXPIRATION` | Token 过期时间（毫秒） | `86400000`（默认 24h） |
 
-> **注意：** 生产环境（`SPRING_PROFILES_ACTIVE=prod`）下，`SMARTERP_DB_URL`、`SMARTERP_DB_USERNAME`、`SMARTERP_DB_PASSWORD`、`SMARTERP_JWT_SECRET` 为**必填项**，缺失会导致启动失败。开发环境有默认值，但不应在生产中使用。
+> **注意：** `SMARTERP_JWT_SECRET` 为**所有环境的必填项**（不少于 32 字符），缺失会导致启动失败。
 
 ### 2. 建库
 

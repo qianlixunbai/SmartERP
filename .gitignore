@@ -50,7 +50,14 @@ coverage/
 
 # Local / secret Spring Boot profiles (keep template profiles tracked)
 application-local.properties
+application-local.yml
+application-local.yaml
 application-secret.properties
+application-secret.yml
+application-secret.yaml
+application-*-local.properties
+application-*-local.yml
+application-*-local.yaml
 !application-dev.properties
 !application-prod.properties
 
