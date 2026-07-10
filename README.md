@@ -18,18 +18,19 @@ OA · Finance · Treasury · Portfolio · Workflow Engine
 
 ## 项目简介
 
-SmartERP 是一个基于 **Java 21 + Spring Boot 3 + Vue 3 + MySQL 8** 的模块化企业管理系统，围绕"模板配置 + 流程引擎"核心设计，覆盖审批工作流、财务核算与投资组合管理。
+SmartERP 是一个基于 **Java 21、Spring Boot 3、Vue 3 和 MySQL 8** 构建的模块化企业管理系统，围绕"模板配置 + 流程引擎"设计，覆盖 OA 审批、经费报销、复式记账、财务期间、成本与利润中心以及投资组合管理。
 
-目前已实现 OA 审批、经费报销、复式记账、财务期间、成本/利润中心和投资组合管理。当前 v4.0.1 稳定化阶段重点验证权限边界、历史数据可追溯性、事务一致性和并发安全，具体包括：
+当前产品版本为 **v4.0**，工程正在进行 **v4.0.1 稳定化**。本阶段不仅完善业务功能，也重点验证系统的安全性与数据一致性，包括：
 
-- 安全与对象级授权
-- HTTP 错误语义
-- 请求参数验证
-- MySQL 真实集成测试
-- 不可变审批模板版本
-- 数据库事务和并发控制
+- 对象级授权与管理员权限边界；
+- 数据库凭据和 JWT 密钥等敏感配置外部化；
+- JWT 密钥启动校验与可靠的本地开发启动流程；
+- HTTP 错误语义与请求参数校验；
+- 受限条件表达式执行器；
+- 不可变审批模板版本与历史数据追溯；
+- 基于 MySQL 8、Testcontainers 和行锁的事务并发验证。
 
-SmartERP 不只展示功能数量，也重点验证权限边界、历史数据可追溯性、事务一致性和并发安全。
+SmartERP 的目标不是简单堆叠 CRUD 页面，而是通过真实的权限、状态机、财务规则、数据库迁移和并发场景，展示企业系统从功能实现走向工程稳定化的过程。
 
 ---
 
@@ -55,7 +56,7 @@ SmartERP
 | 后端框架 | Spring Boot 3.5.14 |
 | 持久层 | MyBatis-Plus 3.5.15 |
 | 数据库 | MySQL 8.0 |
-| 认证鉴权 | JWT（jjwt 0.13.0）+ BCrypt |
+| 认证鉴权 | JWT（jjwt 0.13.0）+ BCrypt + 外部化密钥配置 |
 | 测试 | JUnit 5 + Spring Boot Test + Testcontainers |
 | 前端框架 | Vue 3.5（Composition API） |
 | UI 组件库 | Element Plus 2.13.7 |
@@ -79,7 +80,7 @@ SmartERP/
 │   │   ├── entity/              # 实体类
 │   │   ├── mapper/              # MyBatis-Plus Mapper
 │   │   ├── service/             # 业务逻辑层 + TimeoutScheduler
-│   │   └── security/config/     # 安全相关配置
+│   │   └── validation/          # 自定义验证注解
 │   ├── src/test/java/com/smartoa/
 │   │   ├── service/             # Service 层回归测试
 │   │   └── integration/         # Testcontainers MySQL 集成测试
@@ -125,6 +126,15 @@ SmartERP/
 ### 受限条件表达式执行器
 
 替换了早期的任意 SpEL 实现，改为仅允许批准的变量、操作符和表达式结构；非法表达式及非布尔结果失败关闭。
+
+### 安全配置与开发启动
+
+- 数据库凭据和 JWT 密钥通过环境变量提供，仓库中不保存真实敏感值；
+- `SMARTERP_JWT_SECRET` 在所有环境中均为必填项，且长度不得少于 32 个字符；
+- 密钥缺失或长度不足时在启动阶段失败关闭；
+- 明确说明 Spring Boot 不会自动加载仓库根目录的 `.env`；
+- 提供 PowerShell 本地启动脚本，负责加载 `.env`、检查必填配置并启动后端；
+- 启动日志只显示敏感配置是否存在及其长度，不输出真实密码或密钥。
 
 ### 尚未完成
 
@@ -332,7 +342,7 @@ pnpm run dev
 
 ### OA 审批引擎
 
-- [x] 用户登录（JWT + BCrypt + 角色区分）
+- [x] 用户认证 — JWT + BCrypt + 角色区分，JWT 密钥通过环境变量管理并在启动阶段校验
 - [x] 审批模板 CRUD
 - [x] 请假申请提交
 - [x] 可配置多级审批引擎（approval_node 表驱动，动态节点遍历）

@@ -37,6 +37,11 @@
 - 修复权限（repair 操作仅管理员可执行）
 - HTTP 状态码审计（401/403/404/409 语义对齐）
 - JWT 过滤器 HTTP 响应不泄漏内部信息
+- 数据库凭据和 JWT 密钥全部外部化，不在仓库中保存真实值；
+- JWT 密钥缺失或少于 32 字符时启动失败关闭；
+- 修正 `.env` 不会被 Spring Boot 自动加载造成的本地启动误区；
+- 增加 PowerShell 开发启动脚本，加载本地 `.env` 并在启动前校验配置；
+- 启动脚本对数据库密码和 JWT 密钥执行脱敏输出。
 
 ### Phase 3.5：Portfolio 管理员边界
 
@@ -170,7 +175,9 @@ skipped:    0
 | TemplateVersionSchemaMigrationIntegrationTest | 26 |
 | TemplateServiceConcurrencyIntegrationTest | 4 |
 
-技术栈：MySQL 8.0.40、Testcontainers、Spring Boot Test（仅并发测试）。
+- StabilizationMapperIntegrationTest：Spring Boot + MyBatis + Testcontainers；
+- TemplateVersionSchemaMigrationIntegrationTest：纯 JDBC + Testcontainers；
+- TemplateServiceConcurrencyIntegrationTest：最小 Spring Boot Context + MyBatis + Testcontainers。
 
 真实覆盖：P9 expand 迁移、生成列和唯一索引、历史 ID 保持、Mapper SQL、`SELECT ... FOR UPDATE`、并发复制只创建一个 DRAFT、并发 revision 不丢失、行锁阻塞、节点复制失败整体回滚。
 
@@ -197,6 +204,7 @@ skipped:    0
 - `enabled` 字段暂时保留，与 `lifecycle_status` 双轨运行
 - 旧前端暂时可继续运行（未引入破坏性 API 变更）
 - 数据迁移必须显式处理 ID 1 和脏数据，不自动合并或修复
+- 仓库根目录 `.env` 仅作为本地配置来源，必须通过 IDE、启动脚本或系统环境变量注入 Spring Boot 进程。
 
 ---
 
