@@ -121,25 +121,25 @@ CREATE TABLE IF NOT EXISTS audit_log (
 -- Fixture Data（代表已有生产数据）
 -- ============================================================
 
--- 模板 1：启用（请假模板，enabled=true）
+-- 模板 1：启用（enabled=true）
 INSERT INTO approval_template (id, name, description, enabled) VALUES
-  (1, '请假申请', '员工请假审批模板', 1);
+  (1, 'Leave Request', 'Employee leave approval template', 1);
 
 -- 模板 2：禁用（enabled=false）
 INSERT INTO approval_template (id, name, description, enabled) VALUES
-  (2, '经费报销', '日常经费报销模板（已停用）', 0);
+  (2, 'Expense Report', 'Expense reimbursement template (disabled)', 0);
 
 -- approval_node：模板 1 有 2 个节点
 INSERT INTO approval_node (id, template_id, node_name, sort_order, approver_type, approver_id) VALUES
-  (1, 1, '直属领导审批', 0, 'DIRECT_LEADER', NULL),
-  (2, 1, '部门总监审批', 1, 'DEPARTMENT_HEAD', NULL);
+  (1, 1, 'Direct Leader Approval', 0, 'DIRECT_LEADER', NULL),
+  (2, 1, 'Department Head Approval', 1, 'DEPARTMENT_HEAD', NULL);
 
 -- template_field：模板 1 有 4 个字段
 INSERT INTO template_field (template_id, field_name, field_label, field_type, required, sort_order, options) VALUES
-  (1, 'leaveType', '请假类型', 'SELECT', 1, 0, '["年假","事假","病假","婚假","其他"]'),
-  (1, 'startDate', '开始日期', 'DATE', 1, 1, NULL),
-  (1, 'endDate', '结束日期', 'DATE', 1, 2, NULL),
-  (1, 'reason', '请假原因', 'TEXTAREA', 1, 3, NULL);
+  (1, 'leaveType',   'Leave Type',   'SELECT',   1, 0, '["Annual","Personal","Sick","Wedding","Other"]'),
+  (1, 'startDate',   'Start Date',   'DATE',     1, 1, NULL),
+  (1, 'endDate',     'End Date',     'DATE',     1, 2, NULL),
+  (1, 'reason',      'Reason',       'TEXTAREA', 1, 3, NULL);
 
 -- leave_request：引用模板 1 的请假单
 INSERT INTO leave_request (id, applicant_id, template_id, leave_type, start_date, end_date,

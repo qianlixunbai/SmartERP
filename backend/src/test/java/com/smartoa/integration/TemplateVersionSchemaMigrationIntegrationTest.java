@@ -46,13 +46,6 @@ class TemplateVersionSchemaMigrationIntegrationTest {
                 .withUsername("test")
                 .withPassword("test");
 
-        // Mount MySQL config BEFORE init scripts so charset is set for fixtures
-        Path myCnfPath = resolvePath("backend/src/test/resources/sql/my.cnf");
-        mysql.withCopyFileToContainer(
-                MountableFile.forHostPath(myCnfPath),
-                "/etc/mysql/conf.d/my.cnf"
-        );
-
         // Mount pre-schema init script
         Path preSchemaPath = resolvePath("backend/src/test/resources/sql/template-versioning-pre-schema.sql");
         mysql.withCopyFileToContainer(
@@ -62,9 +55,9 @@ class TemplateVersionSchemaMigrationIntegrationTest {
 
         mysql.start();
 
-        // JDBC connection with UTF-8 encoding
+        // JDBC connection
         connection = DriverManager.getConnection(
-                mysql.getJdbcUrl() + "?characterEncoding=utf-8&useUnicode=true",
+                mysql.getJdbcUrl(),
                 mysql.getUsername(),
                 mysql.getPassword()
         );
@@ -383,13 +376,13 @@ class TemplateVersionSchemaMigrationIntegrationTest {
                          "SELECT id, name, description, enabled FROM approval_template ORDER BY id")) {
                 rs.next();
                 assertEquals(1L, rs.getLong("id"));
-                assertEquals("请假申请", rs.getString("name"));
-                assertEquals("员工请假审批模板", rs.getString("description"));
+                assertEquals("Leave Request", rs.getString("name"));
+                assertEquals("Employee leave approval template", rs.getString("description"));
                 assertTrue(rs.getBoolean("enabled"));
 
                 rs.next();
                 assertEquals(2L, rs.getLong("id"));
-                assertEquals("经费报销", rs.getString("name"));
+                assertEquals("Expense Report", rs.getString("name"));
                 assertFalse(rs.getBoolean("enabled"));
             }
         }
