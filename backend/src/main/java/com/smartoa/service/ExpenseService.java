@@ -385,14 +385,9 @@ public class ExpenseService {
                 .collect(Collectors.toList());
     }
 
-    void skipPendingTasks(Long requestId, Long nodeId) {
+    private void skipPendingTasks(Long requestId, Long nodeId) {
         if (nodeId != null) {
-            expenseApprovalTaskMapper.update(null,
-                    new LambdaUpdateWrapper<ExpenseApprovalTask>()
-                            .eq(ExpenseApprovalTask::getExpenseRequestId, requestId)
-                            .eq(ExpenseApprovalTask::getNodeId, nodeId)
-                            .eq(ExpenseApprovalTask::getStatus, "PENDING")
-                            .set(ExpenseApprovalTask::getStatus, "SKIPPED"));
+            expenseApprovalTaskMapper.skipPendingByRequestAndNode(requestId, nodeId);
         }
     }
 

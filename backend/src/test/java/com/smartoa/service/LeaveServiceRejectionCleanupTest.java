@@ -55,6 +55,55 @@ class LeaveServiceRejectionCleanupTest {
     class RejectionCleanupTests {
 
         @Test
+        @DisplayName("并行审批驳回：当前任务标记为COMPLETED，同节点剩余PENDING任务标记为SKIPPED")
+        void testReject_ParallelApproval_ShouldCleanupTasks() {
+            // Arrange
+            LeaveRequest request = new LeaveRequest();
+            request.setId(1L);
+            request.setStatus("PENDING");
+            request.setCurrentNodeId(10L);
+            request.setCurrentApproverId(2L);
+            request.setApprovalStep(1);
+            request.setTimeoutTime(java.time.LocalDateTime.now().plusHours(24));
+
+            ApprovalTask task = new ApprovalTask();
+            task.setId(100L);
+            task.setLeaveRequestId(1L);
+            task.setNodeId(10L);
+            task.setApproverId(2L);
+            task.setStatus("PENDING");
+
+            when(leaveRequestMapper.selectById(1L)).thenReturn(request);
+            when(approvalTaskMapper.selectOne(any())).thenReturn(task);
+            when(approvalTaskMapper.skipPendingByRequestAndNode(1L, 10L)).thenReturn(2);
+
+            // Act
+            leaveService.approveLeave(1L, 2L, "REJECT", "不同意");
+
+            // Assert - 验证当前任务状态
+            verify(approvalTaskMapper).updateById(argThat((ApprovalTask t) ->
+                    "COMPLETED".equals(t.getStatus()) &&
+                    Long.valueOf(100L).equals(t.getId())
+            ));
+
+            // 验证剩余 PENDING 任务使用驳回前的节点ID清理
+            verify(approvalTaskMapper).skipPendingByRequestAndNode(1L, 10L);
+
+            // 验证申请状态和字段清理
+            assertEquals("REJECTED", request.getStatus());
+            assertNull(request.getCurrentNodeId());
+            assertNull(request.getCurrentApproverId());
+            assertNull(request.getTimeoutTime());
+
+            // 验证审批记录被写入
+            verify(approvalRecordMapper).insert(argThat((com.smartoa.entity.ApprovalRecord record) ->
+                    "REJECT".equals(record.getAction()) &&
+                    Long.valueOf(10L).equals(record.getNodeId()) &&
+                    Long.valueOf(1L).equals(record.getLeaveRequestId())
+            ));
+        }
+
+        @Test
         @DisplayName("SINGLE 审批（无并行任务）驳回时也应正常工作")
         void testReject_SingleApproval_ShouldWorkWithoutParallelTasks() {
             // Arrange
@@ -71,17 +120,25 @@ class LeaveServiceRejectionCleanupTest {
             // Act
             leaveService.approveLeave(3L, 4L, "REJECT", "不同意");
 
-            // Assert
+            // Assert - SINGLE 模式没有并行任务，不应调用批量清理
+            verify(approvalTaskMapper, never()).skipPendingByRequestAndNode(anyLong(), anyLong());
+
+            // 验证申请状态
             assertEquals("REJECTED", request.getStatus());
             assertNull(request.getCurrentNodeId());
             assertNull(request.getCurrentApproverId());
-            // SINGLE 模式没有并行任务，不应调用批量 update
-            verify(approvalTaskMapper, never()).update(isNull(), any());
+
+            // 验证审批记录被写入
+            verify(approvalRecordMapper).insert(argThat((com.smartoa.entity.ApprovalRecord record) ->
+                    "REJECT".equals(record.getAction()) &&
+                    Long.valueOf(30L).equals(record.getNodeId()) &&
+                    Long.valueOf(3L).equals(record.getLeaveRequestId())
+            ));
         }
 
         @Test
-        @DisplayName("驳回时应创建审批记录")
-        void testReject_ShouldCreateApprovalRecord() {
+        @DisplayName("驳回时 currentNodeId 应为驳回前的值（不为null）")
+        void testReject_ShouldUseOriginalNodeIdBeforeCleanup() {
             // Arrange
             LeaveRequest request = new LeaveRequest();
             request.setId(4L);
@@ -90,61 +147,27 @@ class LeaveServiceRejectionCleanupTest {
             request.setCurrentApproverId(5L);
             request.setApprovalStep(1);
 
+            ApprovalTask task = new ApprovalTask();
+            task.setId(400L);
+            task.setLeaveRequestId(4L);
+            task.setNodeId(40L);
+            task.setApproverId(5L);
+            task.setStatus("PENDING");
+
             when(leaveRequestMapper.selectById(4L)).thenReturn(request);
-            when(approvalTaskMapper.selectOne(any())).thenReturn(null);
+            when(approvalTaskMapper.selectOne(any())).thenReturn(task);
+            when(approvalTaskMapper.skipPendingByRequestAndNode(4L, 40L)).thenReturn(1);
 
             // Act
             leaveService.approveLeave(4L, 5L, "REJECT", "不同意");
 
-            // Assert - 验证审批记录被创建（包含 REJECT 动作）
-            verify(approvalRecordMapper).insert(argThat((com.smartoa.entity.ApprovalRecord record) ->
-                    "REJECT".equals(record.getAction()) &&
-                    Long.valueOf(40L).equals(record.getNodeId())
-            ));
-        }
+            // Assert - 验证使用驳回前的节点ID（40L），而不是清理后的 null
+            verify(approvalTaskMapper).skipPendingByRequestAndNode(4L, 40L);
 
-        @Test
-        @DisplayName("并行审批驳回：状态清理")
-        @org.junit.jupiter.api.Disabled("需要 Spring context 初始化 MyBatis Plus lambda cache；跳过并行任务验证由集成测试覆盖")
-        void testReject_ParallelApproval_ShouldCleanupState() {
-            // 此测试需要完整的 Spring context 来初始化 MyBatis Plus LambdaUpdateWrapper
-            // 原因：LambdaUpdateWrapper 在纯 Mockito 环境下无法工作（无 lambda cache）
-            //
-            // 验证内容：
-            // 1. 当前任务标记为 COMPLETED
-            // 2. 同节点剩余 PENDING 任务标记为 SKIPPED
-            // 3. request 状态设为 REJECTED
-            // 4. currentNodeId、currentApproverId、timeoutTime 清空
-            //
-            // 测试策略：通过 @SpringBootTest + @Transactional + 本地 MySQL 运行
-            // 或通过代码审查验证逻辑正确性
-
-            // Arrange
-            LeaveRequest request = new LeaveRequest();
-            request.setId(2L);
-            request.setStatus("PENDING");
-            request.setCurrentNodeId(20L);
-            request.setCurrentApproverId(3L);
-            request.setApprovalStep(1);
-
-            ApprovalTask task = new ApprovalTask();
-            task.setId(200L);
-            task.setLeaveRequestId(2L);
-            task.setNodeId(20L);
-            task.setApproverId(3L);
-            task.setStatus("PENDING");
-
-            when(leaveRequestMapper.selectById(2L)).thenReturn(request);
-            when(approvalTaskMapper.selectOne(any())).thenReturn(task);
-
-            // Act
-            leaveService.approveLeave(2L, 3L, "REJECT", null);
-
-            // Assert
+            // 验证申请状态已清理
             assertEquals("REJECTED", request.getStatus());
             assertNull(request.getCurrentNodeId());
             assertNull(request.getCurrentApproverId());
-            assertEquals("COMPLETED", task.getStatus());
         }
     }
 }

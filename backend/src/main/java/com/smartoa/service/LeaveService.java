@@ -118,12 +118,7 @@ public class LeaveService {
                 task.setStatus("COMPLETED");
                 approvalTaskMapper.updateById(task);
                 // 跳过该节点其余待处理任务（使用驳回前的节点ID）
-                approvalTaskMapper.update(null,
-                        new LambdaUpdateWrapper<ApprovalTask>()
-                                .eq(ApprovalTask::getLeaveRequestId, requestId)
-                                .eq(ApprovalTask::getNodeId, rejectedNodeId)
-                                .eq(ApprovalTask::getStatus, "PENDING")
-                                .set(ApprovalTask::getStatus, "SKIPPED"));
+                approvalTaskMapper.skipPendingByRequestAndNode(requestId, rejectedNodeId);
             }
             return;
         }
@@ -505,14 +500,9 @@ public class LeaveService {
         }
     }
 
-    void skipPendingTasks(Long requestId, Long nodeId) {
+    private void skipPendingTasks(Long requestId, Long nodeId) {
         if (nodeId != null) {
-            approvalTaskMapper.update(null,
-                    new LambdaUpdateWrapper<ApprovalTask>()
-                            .eq(ApprovalTask::getLeaveRequestId, requestId)
-                            .eq(ApprovalTask::getNodeId, nodeId)
-                            .eq(ApprovalTask::getStatus, "PENDING")
-                            .set(ApprovalTask::getStatus, "SKIPPED"));
+            approvalTaskMapper.skipPendingByRequestAndNode(requestId, nodeId);
         }
     }
 
