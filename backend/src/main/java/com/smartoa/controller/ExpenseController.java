@@ -6,6 +6,7 @@ import com.smartoa.dto.ExpenseApproveRequest;
 import com.smartoa.dto.ExpenseSubmitRequest;
 import com.smartoa.entity.*;
 import com.smartoa.service.AccountingService;
+import com.smartoa.service.ApprovalAuthorizationService;
 import com.smartoa.service.ExpenseService;
 import com.smartoa.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class ExpenseController {
     private final ExpenseService expenseService;
     private final AccountingService accountingService;
     private final UserService userService;
+    private final ApprovalAuthorizationService approvalAuthorizationService;
 
     // ========== 提交经费申请 ==========
 
@@ -100,6 +102,7 @@ public class ExpenseController {
     public Result<ExpenseRequest> detail(@PathVariable Long id) {
         User user = userService.getLoginUser();
         if (user == null) throw new BusinessException(401, "请先登录");
+        approvalAuthorizationService.requireReadableExpense(id, user);
         return Result.success(expenseService.getExpenseDetail(id));
     }
 
@@ -109,6 +112,7 @@ public class ExpenseController {
     public Result<List<AuditLog>> auditLogs(@PathVariable Long id) {
         User user = userService.getLoginUser();
         if (user == null) throw new BusinessException(401, "请先登录");
+        approvalAuthorizationService.requireReadableExpense(id, user);
         return Result.success(expenseService.getAuditLogs(id));
     }
 
@@ -118,6 +122,7 @@ public class ExpenseController {
     public Result<List<ExpenseApprovalTask>> tasks(@PathVariable Long id) {
         User user = userService.getLoginUser();
         if (user == null) throw new BusinessException(401, "请先登录");
+        approvalAuthorizationService.requireReadableExpense(id, user);
         return Result.success(expenseService.getApprovalTasks(id));
     }
 

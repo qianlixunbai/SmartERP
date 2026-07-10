@@ -2,6 +2,7 @@ package com.smartoa.controller;
 
 import com.smartoa.common.BusinessException;
 import com.smartoa.entity.User;
+import com.smartoa.service.ApprovalAuthorizationService;
 import com.smartoa.service.LeaveService;
 import com.smartoa.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +26,9 @@ class LeaveControllerRepairPermissionTest {
 
     @Mock
     private UserService userService;
+
+    @Mock
+    private ApprovalAuthorizationService approvalAuthorizationService;
 
     @InjectMocks
     private LeaveController leaveController;

@@ -7,6 +7,7 @@ import com.smartoa.entity.ApprovalRecord;
 import com.smartoa.entity.ApprovalTask;
 import com.smartoa.entity.LeaveRequest;
 import com.smartoa.entity.User;
+import com.smartoa.service.ApprovalAuthorizationService;
 import com.smartoa.service.LeaveService;
 import com.smartoa.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class LeaveController {
 
     private final LeaveService leaveService;
     private final UserService userService;
+    private final ApprovalAuthorizationService approvalAuthorizationService;
 
     @PostMapping("/api/leave/submit")
     public Result<Void> submitLeave(@RequestBody LeaveSubmitRequest dto) {
@@ -108,16 +110,31 @@ public class LeaveController {
 
     @GetMapping("/api/leave/{id}")
     public Result<LeaveRequest> getRequestDetail(@PathVariable Long id) {
+        User user = userService.getLoginUser();
+        if (user == null) {
+            throw new BusinessException(401, "请先登录");
+        }
+        approvalAuthorizationService.requireReadableLeave(id, user);
         return Result.success(leaveService.getRequestDetail(id));
     }
 
     @GetMapping("/api/leave/{id}/records")
     public Result<List<ApprovalRecord>> getApprovalRecords(@PathVariable Long id) {
+        User user = userService.getLoginUser();
+        if (user == null) {
+            throw new BusinessException(401, "请先登录");
+        }
+        approvalAuthorizationService.requireReadableLeave(id, user);
         return Result.success(leaveService.getApprovalRecords(id));
     }
 
     @GetMapping("/api/leave/{id}/tasks")
     public Result<List<ApprovalTask>> getPendingTasks(@PathVariable Long id) {
+        User user = userService.getLoginUser();
+        if (user == null) {
+            throw new BusinessException(401, "请先登录");
+        }
+        approvalAuthorizationService.requireReadableLeave(id, user);
         return Result.success(leaveService.getPendingTasks(id));
     }
 }
