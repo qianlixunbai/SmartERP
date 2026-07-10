@@ -25,6 +25,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.dao.DuplicateKeyException;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -213,7 +214,7 @@ class TemplateServiceDraftLifecycleTest {
         data.setLifecycleStatus("ACTIVE");
         data.setWorkflowType("EXPENSE");
         data.setEnabled(true);
-        when(templateMapper.selectById(12L)).thenReturn(stored);
+        when(templateMapper.selectByIdForUpdate(12L)).thenReturn(stored);
 
         service.update(12L, data);
 
@@ -234,7 +235,7 @@ class TemplateServiceDraftLifecycleTest {
     void updateTreatsNullRevisionAsZero() {
         ApprovalTemplate stored = draft(12L);
         stored.setRevision(null);
-        when(templateMapper.selectById(12L)).thenReturn(stored);
+        when(templateMapper.selectByIdForUpdate(12L)).thenReturn(stored);
 
         service.update(12L, validTemplate());
 
@@ -249,7 +250,7 @@ class TemplateServiceDraftLifecycleTest {
         stored.setRevision(4);
         stored.setUpdateTime(LocalDateTime.MIN);
         stored.setEnabled(false);
-        when(templateMapper.selectById(12L)).thenReturn(stored);
+        when(templateMapper.selectByIdForUpdate(12L)).thenReturn(stored);
 
         BusinessException error = assertThrows(BusinessException.class, () -> service.update(12L, null));
 
@@ -277,7 +278,7 @@ class TemplateServiceDraftLifecycleTest {
         ApprovalTemplate data = validTemplate();
         data.setName(invalidName);
         data.setDescription("new description");
-        when(templateMapper.selectById(12L)).thenReturn(stored);
+        when(templateMapper.selectByIdForUpdate(12L)).thenReturn(stored);
 
         BusinessException error = assertThrows(BusinessException.class, () -> service.update(12L, data));
 
@@ -301,7 +302,7 @@ class TemplateServiceDraftLifecycleTest {
         stored.setUpdateTime(LocalDateTime.MIN);
         ApprovalTemplate data = validTemplate();
         data.setName("n".repeat(101));
-        when(templateMapper.selectById(12L)).thenReturn(stored);
+        when(templateMapper.selectByIdForUpdate(12L)).thenReturn(stored);
 
         BusinessException error = assertThrows(BusinessException.class, () -> service.update(12L, data));
 
@@ -325,7 +326,7 @@ class TemplateServiceDraftLifecycleTest {
         ApprovalTemplate data = validTemplate();
         data.setName("new name");
         data.setDescription("d".repeat(501));
-        when(templateMapper.selectById(12L)).thenReturn(stored);
+        when(templateMapper.selectByIdForUpdate(12L)).thenReturn(stored);
 
         BusinessException error = assertThrows(BusinessException.class, () -> service.update(12L, data));
 
@@ -346,7 +347,7 @@ class TemplateServiceDraftLifecycleTest {
         ApprovalTemplate data = validTemplate();
         data.setName("n".repeat(100));
         data.setDescription("d".repeat(500));
-        when(templateMapper.selectById(12L)).thenReturn(stored);
+        when(templateMapper.selectByIdForUpdate(12L)).thenReturn(stored);
 
         service.update(12L, data);
 
@@ -362,8 +363,8 @@ class TemplateServiceDraftLifecycleTest {
     @Test
     void updatePrioritizesMissingAndImmutableTemplateErrorsOverNullData() {
         ApprovalTemplate active = active(12L);
-        when(templateMapper.selectById(12L)).thenReturn(active);
-        when(templateMapper.selectById(13L)).thenReturn(null);
+        when(templateMapper.selectByIdForUpdate(12L)).thenReturn(active);
+        when(templateMapper.selectByIdForUpdate(13L)).thenReturn(null);
 
         assertAll(
                 () -> assertEquals(409, assertThrows(BusinessException.class, () -> service.update(12L, null)).getCode()),
@@ -373,7 +374,7 @@ class TemplateServiceDraftLifecycleTest {
 
     @Test
     void updateRejectsMissingTemplate() {
-        when(templateMapper.selectById(12L)).thenReturn(null);
+        when(templateMapper.selectByIdForUpdate(12L)).thenReturn(null);
 
         BusinessException error = assertThrows(BusinessException.class, () -> service.update(12L, validTemplate()));
 
@@ -386,7 +387,7 @@ class TemplateServiceDraftLifecycleTest {
     void updateRejectsNonDraftLifecycle(String status) {
         ApprovalTemplate stored = draft(12L);
         stored.setLifecycleStatus(status);
-        when(templateMapper.selectById(12L)).thenReturn(stored);
+        when(templateMapper.selectByIdForUpdate(12L)).thenReturn(stored);
 
         BusinessException error = assertThrows(BusinessException.class, () -> service.update(12L, validTemplate()));
 
@@ -398,7 +399,7 @@ class TemplateServiceDraftLifecycleTest {
     void updateRejectsLegacyTemplate() {
         ApprovalTemplate legacy = draft(12L);
         legacy.setLifecycleStatus(null);
-        when(templateMapper.selectById(12L)).thenReturn(legacy);
+        when(templateMapper.selectByIdForUpdate(12L)).thenReturn(legacy);
 
         BusinessException error = assertThrows(BusinessException.class, () -> service.update(12L, validTemplate()));
 
@@ -417,9 +418,12 @@ class TemplateServiceDraftLifecycleTest {
         sourceNode.setTimeoutAction("ESCALATE");
         sourceNode.setEscalateToUserId(8L);
         TemplateField sourceField = field(81L, 7L);
-        when(templateMapper.selectById(7L)).thenReturn(source);
-        when(templateMapper.selectCount(any())).thenReturn(0L);
-        when(templateMapper.selectList(any())).thenReturn(List.of(source));
+
+        // Lock source via selectByIdForUpdate
+        when(templateMapper.selectByIdForUpdate(7L)).thenReturn(source);
+        // Lock all versions by key via selectVersionsByKeyForUpdate
+        when(templateMapper.selectVersionsByKeyForUpdate(source.getTemplateKey()))
+                .thenReturn(List.of(source));
         when(nodeMapper.selectList(any())).thenReturn(List.of(sourceNode));
         when(fieldMapper.selectList(any())).thenReturn(List.of(sourceField));
         doAnswer(invocation -> {
@@ -461,14 +465,19 @@ class TemplateServiceDraftLifecycleTest {
                 () -> assertEquals(sourceField.getRequired(), fieldCaptor.getValue().getRequired()),
                 () -> assertEquals(sourceField.getSortOrder(), fieldCaptor.getValue().getSortOrder()),
                 () -> assertEquals(sourceField.getOptions(), fieldCaptor.getValue().getOptions()));
+
+        // Verify lock order: source → all versions by key
+        InOrder lockOrder = inOrder(templateMapper);
+        lockOrder.verify(templateMapper).selectByIdForUpdate(7L);
+        lockOrder.verify(templateMapper).selectVersionsByKeyForUpdate(source.getTemplateKey());
     }
 
     @Test
     void createDraftRejectsMissingAndIncompleteSourceVersions() {
-        when(templateMapper.selectById(7L)).thenReturn(null);
+        when(templateMapper.selectByIdForUpdate(7L)).thenReturn(null);
         ApprovalTemplate incomplete = active(8L);
         incomplete.setWorkflowType(null);
-        when(templateMapper.selectById(8L)).thenReturn(incomplete);
+        when(templateMapper.selectByIdForUpdate(8L)).thenReturn(incomplete);
 
         assertAll(
                 () -> assertEquals(404, assertThrows(BusinessException.class, () -> service.createDraftFromVersion(7L)).getCode()),
@@ -482,14 +491,19 @@ class TemplateServiceDraftLifecycleTest {
         source.setVersionNo(3);
         ApprovalTemplate latest = active(8L);
         latest.setVersionNo(7);
-        when(templateMapper.selectById(7L)).thenReturn(source);
-        when(templateMapper.selectCount(any())).thenReturn(0L);
-        when(templateMapper.selectList(any())).thenReturn(List.of(source, latest));
+        latest.setTemplateKey(source.getTemplateKey());
+
+        // Lock source
+        when(templateMapper.selectByIdForUpdate(7L)).thenReturn(source);
+        // Lock all versions — returns source and latest
+        when(templateMapper.selectVersionsByKeyForUpdate(source.getTemplateKey()))
+                .thenReturn(List.of(source, latest));
         doThrow(new DuplicateKeyException("duplicate")).when(templateMapper).insert(any(ApprovalTemplate.class));
 
         BusinessException error = assertThrows(BusinessException.class, () -> service.createDraftFromVersion(7L));
 
         assertEquals(409, error.getCode());
+        assertEquals("模板版本并发冲突，请重试", error.getMessage());
         ArgumentCaptor<ApprovalTemplate> captor = ArgumentCaptor.forClass(ApprovalTemplate.class);
         verify(templateMapper).insert(captor.capture());
         assertEquals(8, captor.getValue().getVersionNo());
@@ -498,12 +512,22 @@ class TemplateServiceDraftLifecycleTest {
 
     @Test
     void createDraftRejectsWhenDraftAlreadyExistsWithoutInsert() {
-        when(templateMapper.selectById(7L)).thenReturn(active(7L));
-        when(templateMapper.selectCount(any())).thenReturn(1L);
+        ApprovalTemplate source = active(7L);
+        source.setTemplateKey("LEAVE_FLOW");
+        ApprovalTemplate existingDraft = draft(9L);
+        existingDraft.setTemplateKey("LEAVE_FLOW");
+        existingDraft.setLifecycleStatus("DRAFT");
+        existingDraft.setVersionNo(2);
+
+        when(templateMapper.selectByIdForUpdate(7L)).thenReturn(source);
+        // All versions include a DRAFT
+        when(templateMapper.selectVersionsByKeyForUpdate("LEAVE_FLOW"))
+                .thenReturn(List.of(source, existingDraft));
 
         BusinessException error = assertThrows(BusinessException.class, () -> service.createDraftFromVersion(7L));
 
         assertEquals(409, error.getCode());
+        assertEquals("该模板已有草稿版本", error.getMessage());
         verify(templateMapper, never()).insert(any(ApprovalTemplate.class));
         verifyNoInteractions(nodeMapper, fieldMapper);
     }
@@ -514,8 +538,8 @@ class TemplateServiceDraftLifecycleTest {
         retired.setLifecycleStatus("RETIRED");
         ApprovalTemplate legacy = active(8L);
         legacy.setLifecycleStatus(null);
-        when(templateMapper.selectById(7L)).thenReturn(retired);
-        when(templateMapper.selectById(8L)).thenReturn(legacy);
+        when(templateMapper.selectByIdForUpdate(7L)).thenReturn(retired);
+        when(templateMapper.selectByIdForUpdate(8L)).thenReturn(legacy);
 
         assertAll(
                 () -> assertEquals(409, assertThrows(BusinessException.class, () -> service.createDraftFromVersion(7L)).getCode()),
@@ -525,9 +549,11 @@ class TemplateServiceDraftLifecycleTest {
 
     @Test
     void createDraftPropagatesNodeCopyFailure() {
-        when(templateMapper.selectById(7L)).thenReturn(active(7L));
-        when(templateMapper.selectCount(any())).thenReturn(0L);
-        when(templateMapper.selectList(any())).thenReturn(List.of(active(7L)));
+        ApprovalTemplate source = active(7L);
+        source.setTemplateKey("LEAVE_FLOW");
+        when(templateMapper.selectByIdForUpdate(7L)).thenReturn(source);
+        when(templateMapper.selectVersionsByKeyForUpdate("LEAVE_FLOW"))
+                .thenReturn(List.of(source));
         when(nodeMapper.selectList(any())).thenReturn(List.of(node(71L, 7L)));
         doAnswer(invocation -> {
             invocation.<ApprovalTemplate>getArgument(0).setId(9L);
@@ -549,7 +575,7 @@ class TemplateServiceDraftLifecycleTest {
         incoming.setSortOrder(44);
         incoming.setCreateTime(LocalDateTime.MIN);
         incoming.setUpdateTime(LocalDateTime.MIN);
-        when(templateMapper.selectById(5L)).thenReturn(template);
+        when(templateMapper.selectByIdForUpdate(5L)).thenReturn(template);
         when(nodeMapper.selectList(any())).thenReturn(List.of());
 
         service.saveNodes(5L, List.of(incoming));
@@ -561,7 +587,8 @@ class TemplateServiceDraftLifecycleTest {
                 () -> assertNotEquals(LocalDateTime.MIN, incoming.getCreateTime()),
                 () -> assertNotEquals(LocalDateTime.MIN, incoming.getUpdateTime()),
                 () -> assertEquals(3, template.getRevision()));
-        InOrder order = inOrder(nodeMapper, templateMapper);
+        InOrder order = inOrder(templateMapper, nodeMapper, templateMapper);
+        order.verify(templateMapper).selectByIdForUpdate(5L);
         order.verify(nodeMapper).delete(any());
         order.verify(nodeMapper).insert(incoming);
         order.verify(templateMapper).updateById(template);
@@ -579,11 +606,12 @@ class TemplateServiceDraftLifecycleTest {
     @Test
     void saveNodesAllowsEmptyListForUnreferencedDraft() {
         ApprovalTemplate template = draft(5L);
-        when(templateMapper.selectById(5L)).thenReturn(template);
+        when(templateMapper.selectByIdForUpdate(5L)).thenReturn(template);
         when(nodeMapper.selectList(any())).thenReturn(List.of());
 
         service.saveNodes(5L, List.of());
 
+        verify(templateMapper).selectByIdForUpdate(5L);
         verify(nodeMapper).delete(any());
         verify(nodeMapper, never()).insert(any(ApprovalNode.class));
         verify(templateMapper).updateById(template);
@@ -597,9 +625,9 @@ class TemplateServiceDraftLifecycleTest {
         retired.setLifecycleStatus("RETIRED");
         ApprovalTemplate legacy = draft(7L);
         legacy.setLifecycleStatus(null);
-        when(templateMapper.selectById(5L)).thenReturn(active);
-        when(templateMapper.selectById(6L)).thenReturn(retired);
-        when(templateMapper.selectById(7L)).thenReturn(legacy);
+        when(templateMapper.selectByIdForUpdate(5L)).thenReturn(active);
+        when(templateMapper.selectByIdForUpdate(6L)).thenReturn(retired);
+        when(templateMapper.selectByIdForUpdate(7L)).thenReturn(legacy);
 
         assertAll(
                 () -> assertEquals(409, assertThrows(BusinessException.class, () -> service.saveNodes(5L, List.of())).getCode()),
@@ -612,7 +640,7 @@ class TemplateServiceDraftLifecycleTest {
     @Test
     void saveNodesStopsWithZeroWritesWhenHistoricNodeReferenceExists() {
         ApprovalTemplate template = draft(5L);
-        when(templateMapper.selectById(5L)).thenReturn(template);
+        when(templateMapper.selectByIdForUpdate(5L)).thenReturn(template);
         when(nodeMapper.selectList(any())).thenReturn(List.of(node(51L, 5L)));
         when(recordMapper.selectCount(any())).thenReturn(1L);
 
@@ -630,7 +658,7 @@ class TemplateServiceDraftLifecycleTest {
     @Test
     void saveNodesStopsWithZeroWritesWhenExpenseCurrentNodeReferencesOldNode() {
         ApprovalTemplate template = draft(5L);
-        when(templateMapper.selectById(5L)).thenReturn(template);
+        when(templateMapper.selectByIdForUpdate(5L)).thenReturn(template);
         when(nodeMapper.selectList(any())).thenReturn(List.of(node(51L, 5L)));
         when(expenseMapper.selectCount(any())).thenReturn(1L);
 
@@ -646,12 +674,22 @@ class TemplateServiceDraftLifecycleTest {
     void deleteNodeOnlyDeletesUnreferencedDraftNodeAndBumpsRevision() {
         ApprovalTemplate template = draft(5L);
         template.setRevision(null);
-        when(nodeMapper.selectById(51L)).thenReturn(node(51L, 5L));
-        when(templateMapper.selectById(5L)).thenReturn(template);
+        ApprovalNode node = node(51L, 5L);
+
+        // First read: node exists
+        when(nodeMapper.selectById(51L)).thenReturn(node);
+        // Lock template
+        when(templateMapper.selectByIdForUpdate(5L)).thenReturn(template);
+        // Re-read node after lock
+        when(nodeMapper.selectById(51L)).thenReturn(node);
 
         service.deleteNode(51L);
 
-        InOrder order = inOrder(nodeMapper, templateMapper);
+        // Verify lock order: read node → lock template → re-read node → delete → update
+        InOrder order = inOrder(nodeMapper, templateMapper, nodeMapper);
+        order.verify(nodeMapper).selectById(51L);
+        order.verify(templateMapper).selectByIdForUpdate(5L);
+        order.verify(nodeMapper).selectById(51L);
         order.verify(nodeMapper).deleteById((java.io.Serializable) 51L);
         order.verify(templateMapper).updateById(template);
         assertEquals(1, template.getRevision());
@@ -659,13 +697,18 @@ class TemplateServiceDraftLifecycleTest {
 
     @Test
     void deleteNodeRejectsMissingNodeAndReferencedNodeWithoutDelete() {
+        // Missing node: first selectById returns null
         when(nodeMapper.selectById(51L)).thenReturn(null);
         assertEquals(404, assertThrows(BusinessException.class, () -> service.deleteNode(51L)).getCode());
         verify(nodeMapper, never()).deleteById(any(java.io.Serializable.class));
 
         reset(nodeMapper);
-        when(nodeMapper.selectById(51L)).thenReturn(node(51L, 5L));
-        when(templateMapper.selectById(5L)).thenReturn(draft(5L));
+        // Referenced node: first read returns node, lock template, re-read node, then reference check fails
+        ApprovalNode node = node(51L, 5L);
+        when(nodeMapper.selectById(51L)).thenReturn(node);
+        when(templateMapper.selectByIdForUpdate(5L)).thenReturn(draft(5L));
+        // Re-read after lock: still exists
+        when(nodeMapper.selectById(51L)).thenReturn(node);
         when(taskMapper.selectCount(any())).thenReturn(1L);
         assertEquals(409, assertThrows(BusinessException.class, () -> service.deleteNode(51L)).getCode());
         verify(nodeMapper, never()).deleteById((java.io.Serializable) 51L);
@@ -675,7 +718,7 @@ class TemplateServiceDraftLifecycleTest {
     void deleteNodeRejectsActiveTemplateBeforeReferenceChecks() {
         ApprovalTemplate active = active(5L);
         when(nodeMapper.selectById(51L)).thenReturn(node(51L, 5L));
-        when(templateMapper.selectById(5L)).thenReturn(active);
+        when(templateMapper.selectByIdForUpdate(5L)).thenReturn(active);
 
         assertEquals(409, assertThrows(BusinessException.class, () -> service.deleteNode(51L)).getCode());
         verify(nodeMapper, never()).deleteById((java.io.Serializable) 51L);
@@ -685,12 +728,13 @@ class TemplateServiceDraftLifecycleTest {
     @Test
     void deleteDraftDeletesFieldsThenNodesThenTemplate() {
         ApprovalTemplate template = draft(5L);
-        when(templateMapper.selectById(5L)).thenReturn(template);
+        when(templateMapper.selectByIdForUpdate(5L)).thenReturn(template);
         when(nodeMapper.selectList(any())).thenReturn(List.of());
 
         service.delete(5L);
 
-        InOrder order = inOrder(fieldMapper, nodeMapper, templateMapper);
+        InOrder order = inOrder(templateMapper, fieldMapper, nodeMapper, templateMapper);
+        order.verify(templateMapper).selectByIdForUpdate(5L);
         order.verify(fieldMapper).delete(any());
         order.verify(nodeMapper).delete(any());
         order.verify(templateMapper).deleteById((java.io.Serializable) 5L);
@@ -698,7 +742,7 @@ class TemplateServiceDraftLifecycleTest {
 
     @Test
     void deleteDraftRejectsTemplateReferencesBeforeAnyDelete() {
-        when(templateMapper.selectById(5L)).thenReturn(draft(5L));
+        when(templateMapper.selectByIdForUpdate(5L)).thenReturn(draft(5L));
         when(leaveMapper.selectCount(any())).thenReturn(1L);
 
         assertEquals(409, assertThrows(BusinessException.class, () -> service.delete(5L)).getCode());
@@ -711,7 +755,7 @@ class TemplateServiceDraftLifecycleTest {
 
     @Test
     void deleteDraftRejectsExpenseAndNodeReferencesBeforeAnyDelete() {
-        when(templateMapper.selectById(5L)).thenReturn(draft(5L));
+        when(templateMapper.selectByIdForUpdate(5L)).thenReturn(draft(5L));
         when(expenseMapper.selectCount(any())).thenReturn(1L);
         assertEquals(409, assertThrows(BusinessException.class, () -> service.delete(5L)).getCode());
         verify(fieldMapper, never()).delete(any());
@@ -719,7 +763,7 @@ class TemplateServiceDraftLifecycleTest {
         verify(templateMapper, never()).deleteById(any(java.io.Serializable.class));
 
         reset(expenseMapper);
-        when(templateMapper.selectById(6L)).thenReturn(draft(6L));
+        when(templateMapper.selectByIdForUpdate(6L)).thenReturn(draft(6L));
         when(nodeMapper.selectList(any())).thenReturn(List.of(node(61L, 6L)));
         when(auditLogMapper.selectCount(any())).thenReturn(1L);
         BusinessException nodeReferenceError = assertThrows(BusinessException.class, () -> service.delete(6L));
@@ -738,9 +782,9 @@ class TemplateServiceDraftLifecycleTest {
         retired.setLifecycleStatus("RETIRED");
         ApprovalTemplate legacy = draft(7L);
         legacy.setLifecycleStatus(null);
-        when(templateMapper.selectById(5L)).thenReturn(active);
-        when(templateMapper.selectById(6L)).thenReturn(retired);
-        when(templateMapper.selectById(7L)).thenReturn(legacy);
+        when(templateMapper.selectByIdForUpdate(5L)).thenReturn(active);
+        when(templateMapper.selectByIdForUpdate(6L)).thenReturn(retired);
+        when(templateMapper.selectByIdForUpdate(7L)).thenReturn(legacy);
 
         assertAll(
                 () -> assertEquals(409, assertThrows(BusinessException.class, () -> service.delete(5L)).getCode()),
@@ -753,13 +797,160 @@ class TemplateServiceDraftLifecycleTest {
 
     @Test
     void deleteRejectsMissingTemplate() {
-        when(templateMapper.selectById(5L)).thenReturn(null);
+        when(templateMapper.selectByIdForUpdate(5L)).thenReturn(null);
 
         assertEquals(404, assertThrows(BusinessException.class, () -> service.delete(5L)).getCode());
         verifyNoInteractions(fieldMapper, nodeMapper, recordMapper, leaveMapper, taskMapper, expenseMapper,
                 expenseTaskMapper, auditLogMapper);
         verify(templateMapper, never()).deleteById(any(java.io.Serializable.class));
     }
+
+    // ========== 新增：锁方法验证测试 ==========
+
+    @Test
+    void updateUsesSelectByIdForUpdateNotSelectById() {
+        ApprovalTemplate stored = draft(12L);
+        when(templateMapper.selectByIdForUpdate(12L)).thenReturn(stored);
+
+        service.update(12L, validTemplate());
+
+        verify(templateMapper).selectByIdForUpdate(12L);
+        verify(templateMapper, never()).selectById(anyLong());
+    }
+
+    @Test
+    void saveNodesUsesLockedTemplateNotSelectById() {
+        ApprovalTemplate template = draft(5L);
+        when(templateMapper.selectByIdForUpdate(5L)).thenReturn(template);
+        when(nodeMapper.selectList(any())).thenReturn(List.of());
+
+        service.saveNodes(5L, List.of());
+
+        verify(templateMapper).selectByIdForUpdate(5L);
+        verify(templateMapper, never()).selectById(anyLong());
+    }
+
+    @Test
+    void deleteUsesSelectByIdForUpdateNotSelectById() {
+        ApprovalTemplate template = draft(5L);
+        when(templateMapper.selectByIdForUpdate(5L)).thenReturn(template);
+        when(nodeMapper.selectList(any())).thenReturn(List.of());
+
+        service.delete(5L);
+
+        verify(templateMapper).selectByIdForUpdate(5L);
+        verify(templateMapper, never()).selectById(anyLong());
+    }
+
+    @Test
+    void deleteNodeLocksTemplateThenReReadsNode() {
+        ApprovalTemplate template = draft(5L);
+        ApprovalNode node = node(51L, 5L);
+        when(nodeMapper.selectById(51L)).thenReturn(node);
+        when(templateMapper.selectByIdForUpdate(5L)).thenReturn(template);
+        when(nodeMapper.selectById(51L)).thenReturn(node); // re-read after lock
+
+        service.deleteNode(51L);
+
+        InOrder order = inOrder(nodeMapper, templateMapper);
+        // First read node (no lock)
+        order.verify(nodeMapper).selectById(51L);
+        // Lock template
+        order.verify(templateMapper).selectByIdForUpdate(5L);
+        // Re-read node after lock
+        order.verify(nodeMapper).selectById(51L);
+        // Then delete and update
+        order.verify(nodeMapper).deleteById((java.io.Serializable) 51L);
+        order.verify(templateMapper).updateById(template);
+    }
+
+    @Test
+    void createDraftFromVersionUsesSelectByIdForUpdateAndSelectVersionsByKeyForUpdate() {
+        ApprovalTemplate source = active(7L);
+        source.setTemplateKey("LEAVE_FLOW");
+        when(templateMapper.selectByIdForUpdate(7L)).thenReturn(source);
+        when(templateMapper.selectVersionsByKeyForUpdate("LEAVE_FLOW"))
+                .thenReturn(List.of(source));
+        when(nodeMapper.selectList(any())).thenReturn(List.of());
+        when(fieldMapper.selectList(any())).thenReturn(List.of());
+        doAnswer(invocation -> {
+            invocation.<ApprovalTemplate>getArgument(0).setId(9L);
+            return 1;
+        }).when(templateMapper).insert(any(ApprovalTemplate.class));
+
+        service.createDraftFromVersion(7L);
+
+        InOrder lockOrder = inOrder(templateMapper);
+        lockOrder.verify(templateMapper).selectByIdForUpdate(7L);
+        lockOrder.verify(templateMapper).selectVersionsByKeyForUpdate("LEAVE_FLOW");
+        verify(templateMapper, never()).selectById(anyLong());
+        verify(templateMapper, never()).selectList(any());
+        verify(templateMapper, never()).selectCount(any());
+    }
+
+    @Test
+    void createDraftCalculatesMaxVersionFromLockedVersionsWithoutSelectList() {
+        ApprovalTemplate source = active(7L);
+        source.setVersionNo(3);
+        source.setTemplateKey("KEY");
+        ApprovalTemplate otherVersion = active(10L);
+        otherVersion.setVersionNo(10);
+        otherVersion.setTemplateKey("KEY");
+
+        when(templateMapper.selectByIdForUpdate(7L)).thenReturn(source);
+        when(templateMapper.selectVersionsByKeyForUpdate("KEY"))
+                .thenReturn(List.of(source, otherVersion));
+        when(nodeMapper.selectList(any())).thenReturn(List.of());
+        when(fieldMapper.selectList(any())).thenReturn(List.of());
+        doAnswer(invocation -> {
+            invocation.<ApprovalTemplate>getArgument(0).setId(9L);
+            return 1;
+        }).when(templateMapper).insert(any(ApprovalTemplate.class));
+
+        service.createDraftFromVersion(7L);
+
+        // Verify max version comes from locked list (10), not from a separate selectList
+        ArgumentCaptor<ApprovalTemplate> captor = ArgumentCaptor.forClass(ApprovalTemplate.class);
+        verify(templateMapper).insert(captor.capture());
+        assertEquals(11, captor.getValue().getVersionNo());
+        verify(templateMapper, never()).selectList(any());
+    }
+
+    @Test
+    void createDraftReturnsZeroInsertsWhenDraftAlreadyExistsInLockedVersions() {
+        ApprovalTemplate source = active(7L);
+        source.setTemplateKey("KEY");
+        ApprovalTemplate draft = draft(9L);
+        draft.setTemplateKey("KEY");
+        draft.setLifecycleStatus("DRAFT");
+
+        when(templateMapper.selectByIdForUpdate(7L)).thenReturn(source);
+        when(templateMapper.selectVersionsByKeyForUpdate("KEY"))
+                .thenReturn(List.of(source, draft));
+
+        assertEquals(409, assertThrows(BusinessException.class,
+                () -> service.createDraftFromVersion(7L)).getCode());
+
+        verify(templateMapper, never()).insert(any(ApprovalTemplate.class));
+        verifyNoInteractions(nodeMapper, fieldMapper);
+    }
+
+    @Test
+    void createDraftMapsDatabaseConflictToConcurrencyConflict() {
+        ApprovalTemplate source = active(7L);
+        source.setTemplateKey("KEY");
+        when(templateMapper.selectByIdForUpdate(7L)).thenReturn(source);
+        when(templateMapper.selectVersionsByKeyForUpdate("KEY"))
+                .thenReturn(List.of(source));
+        doThrow(new DuplicateKeyException("uk_template_key_version")).when(templateMapper).insert(any(ApprovalTemplate.class));
+
+        BusinessException error = assertThrows(BusinessException.class, () -> service.createDraftFromVersion(7L));
+
+        assertEquals(409, error.getCode());
+        assertEquals("模板版本并发冲突，请重试", error.getMessage());
+    }
+
+    // ========== 辅助工厂方法 ==========
 
     private ApprovalTemplate validTemplate() {
         ApprovalTemplate template = new ApprovalTemplate();

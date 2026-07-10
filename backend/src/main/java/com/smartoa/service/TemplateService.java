@@ -90,7 +90,7 @@ public class TemplateService {
 
     @Transactional
     public void update(Long id, ApprovalTemplate data) {
-        ApprovalTemplate template = requireMutableDraft(id);
+        ApprovalTemplate template = requireMutableDraftForUpdate(id);
         validateTemplateMetadata(data);
         template.setName(data.getName());
         template.setDescription(data.getDescription());
@@ -101,7 +101,8 @@ public class TemplateService {
 
     @Transactional
     public ApprovalTemplate createDraftFromVersion(Long sourceVersionId) {
-        ApprovalTemplate source = templateMapper.selectById(sourceVersionId);
+        // 1. 锁 source
+        ApprovalTemplate source = templateMapper.selectByIdForUpdate(sourceVersionId);
         if (source == null) {
             throw new BusinessException(404, "模板不存在");
         }
@@ -114,20 +115,32 @@ public class TemplateService {
         if (source.getTemplateKey() == null || source.getVersionNo() == null || source.getWorkflowType() == null) {
             throw new BusinessException(409, "已发布模板版本信息不完整，禁止复制");
         }
-        if (templateMapper.selectCount(new LambdaQueryWrapper<ApprovalTemplate>()
-                .eq(ApprovalTemplate::getTemplateKey, source.getTemplateKey())
-                .eq(ApprovalTemplate::getLifecycleStatus, DRAFT)) > 0) {
+
+        // 2. 锁同 key 所有版本
+        List<ApprovalTemplate> allVersions = templateMapper.selectVersionsByKeyForUpdate(source.getTemplateKey());
+
+        // 3. 从锁定结果中重新找到 source 并再次确认
+        ApprovalTemplate lockedSource = allVersions.stream()
+                .filter(v -> v.getId().equals(sourceVersionId))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(404, "模板不存在"));
+        if (!ACTIVE.equals(lockedSource.getLifecycleStatus())) {
+            throw new BusinessException(409, "只有已发布模板可以复制为草稿");
+        }
+
+        // 4. 检查是否已有 DRAFT
+        if (allVersions.stream().anyMatch(v -> DRAFT.equals(v.getLifecycleStatus()))) {
             throw new BusinessException(409, "该模板已有草稿版本");
         }
 
-        int nextVersionNo = templateMapper.selectList(new LambdaQueryWrapper<ApprovalTemplate>()
-                        .eq(ApprovalTemplate::getTemplateKey, source.getTemplateKey()))
-                .stream()
+        // 5. 在锁定列表中计算最大 versionNo
+        int nextVersionNo = allVersions.stream()
                 .map(ApprovalTemplate::getVersionNo)
                 .filter(Objects::nonNull)
                 .mapToInt(Integer::intValue)
                 .max()
                 .orElse(source.getVersionNo()) + 1;
+
         LocalDateTime now = LocalDateTime.now();
         ApprovalTemplate draft = new ApprovalTemplate();
         draft.setName(source.getName());
@@ -146,9 +159,10 @@ public class TemplateService {
         try {
             templateMapper.insert(draft);
         } catch (DataIntegrityViolationException e) {
-            throw new BusinessException(409, "该模板已有草稿版本");
+            throw new BusinessException(409, "模板版本并发冲突，请重试");
         }
 
+        // 6. 复制节点和字段
         for (ApprovalNode node : listNodes(sourceVersionId)) {
             approvalNodeMapper.insert(copyNode(node, draft.getId(), now));
         }
@@ -160,10 +174,19 @@ public class TemplateService {
 
     @Transactional
     public void delete(Long id) {
-        ApprovalTemplate template = requireMutableDraft(id);
+        // 1. 先锁模板
+        ApprovalTemplate template = requireMutableDraftForUpdate(id);
+
+        // 2. 检查模板引用
         ensureTemplateUnreferenced(template.getId());
+
+        // 3. 查询节点
         List<Long> nodeIds = listNodes(template.getId()).stream().map(ApprovalNode::getId).toList();
+
+        // 4. 检查节点引用
         ensureNodesUnreferenced(nodeIds, "草稿模板已被业务数据引用，禁止删除");
+
+        // 5. 字段→节点→模板顺序删除
         templateFieldMapper.delete(new LambdaQueryWrapper<TemplateField>().eq(TemplateField::getTemplateId, id));
         approvalNodeMapper.delete(new LambdaQueryWrapper<ApprovalNode>().eq(ApprovalNode::getTemplateId, id));
         templateMapper.deleteById(id);
@@ -179,13 +202,21 @@ public class TemplateService {
 
     @Transactional
     public void saveNodes(Long templateId, List<ApprovalNode> nodes) {
+        // 1. null 参数在数据库访问前返回 400
         if (nodes == null) {
             throw new BusinessException(400, "审批节点不能为空");
         }
-        ApprovalTemplate template = requireMutableDraft(templateId);
+
+        // 2. 先锁模板
+        ApprovalTemplate template = requireMutableDraftForUpdate(templateId);
+
+        // 3. 锁定后查询旧节点
         List<ApprovalNode> oldNodes = listNodes(templateId);
+
+        // 4. 六表引用检查
         ensureNodesUnreferenced(oldNodes.stream().map(ApprovalNode::getId).toList());
 
+        // 5. 删除和插入节点
         approvalNodeMapper.delete(new LambdaQueryWrapper<ApprovalNode>()
                 .eq(ApprovalNode::getTemplateId, templateId));
         LocalDateTime now = LocalDateTime.now();
@@ -198,19 +229,41 @@ public class TemplateService {
             node.setUpdateTime(now);
             approvalNodeMapper.insert(node);
         }
+
+        // 6. 递增 revision
         incrementDraftRevision(template);
         templateMapper.updateById(template);
     }
 
     @Transactional
     public void deleteNode(Long nodeId) {
+        // 1. 普通读取 node，取得候选 templateId
         ApprovalNode node = approvalNodeMapper.selectById(nodeId);
         if (node == null) {
             throw new BusinessException(404, "审批节点不存在");
         }
-        ApprovalTemplate template = requireMutableDraft(node.getTemplateId());
+
+        // 2. 锁模板
+        ApprovalTemplate template = requireMutableDraftForUpdate(node.getTemplateId());
+
+        // 3. 锁定模板后重新读取 node
+        node = approvalNodeMapper.selectById(nodeId);
+
+        // 4. 再次确认 node 仍存在且 templateId 等于已锁模板 ID
+        if (node == null) {
+            throw new BusinessException(404, "审批节点不存在");
+        }
+        if (!node.getTemplateId().equals(template.getId())) {
+            throw new BusinessException(404, "审批节点不存在");
+        }
+
+        // 5. 六表引用检查
         ensureNodesUnreferenced(List.of(nodeId));
+
+        // 6. 删除节点
         approvalNodeMapper.deleteById(nodeId);
+
+        // 7. revision +1
         incrementDraftRevision(template);
         templateMapper.updateById(template);
     }
@@ -221,6 +274,40 @@ public class TemplateService {
         return templateFieldMapper.selectList(new LambdaQueryWrapper<TemplateField>()
                 .eq(TemplateField::getTemplateId, templateId)
                 .orderByAsc(TemplateField::getSortOrder));
+    }
+
+    // ========== 私有辅助方法 ==========
+
+    /**
+     * 使用 SELECT ... FOR UPDATE 锁定并校验草稿模板。
+     * <p>
+     * 状态语义：
+     * <ul>
+     *   <li>不存在 → 404</li>
+     *   <li>legacy（lifecycleStatus 为 null）→ 409</li>
+     *   <li>ACTIVE → 409</li>
+     *   <li>RETIRED → 409</li>
+     *   <li>其他非 DRAFT → 409</li>
+     * </ul>
+     */
+    private ApprovalTemplate requireMutableDraftForUpdate(Long templateId) {
+        ApprovalTemplate template = templateMapper.selectByIdForUpdate(templateId);
+        if (template == null) {
+            throw new BusinessException(404, "模板不存在");
+        }
+        if (template.getLifecycleStatus() == null) {
+            throw legacyTemplateImmutable();
+        }
+        if (ACTIVE.equals(template.getLifecycleStatus())) {
+            throw new BusinessException(409, "已发布模板不可修改");
+        }
+        if (RETIRED.equals(template.getLifecycleStatus())) {
+            throw new BusinessException(409, "已退休模板不可修改");
+        }
+        if (!DRAFT.equals(template.getLifecycleStatus())) {
+            throw new BusinessException(409, "非草稿模板不可修改");
+        }
+        return template;
     }
 
     private void validateTemplateMetadata(ApprovalTemplate template) {
@@ -242,26 +329,6 @@ public class TemplateService {
         if (!LEAVE.equals(template.getWorkflowType()) && !EXPENSE.equals(template.getWorkflowType())) {
             throw new BusinessException(400, "流程类型仅支持 LEAVE 或 EXPENSE");
         }
-    }
-
-    private ApprovalTemplate requireMutableDraft(Long templateId) {
-        ApprovalTemplate template = templateMapper.selectById(templateId);
-        if (template == null) {
-            throw new BusinessException(404, "模板不存在");
-        }
-        if (template.getLifecycleStatus() == null) {
-            throw legacyTemplateImmutable();
-        }
-        if (ACTIVE.equals(template.getLifecycleStatus())) {
-            throw new BusinessException(409, "已发布模板不可修改");
-        }
-        if (RETIRED.equals(template.getLifecycleStatus())) {
-            throw new BusinessException(409, "已退休模板不可修改");
-        }
-        if (!DRAFT.equals(template.getLifecycleStatus())) {
-            throw new BusinessException(409, "非草稿模板不可修改");
-        }
-        return template;
     }
 
     private void ensureTemplateUnreferenced(Long templateId) {

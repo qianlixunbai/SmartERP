@@ -74,7 +74,7 @@ jobs:
 
       - name: Run Testcontainers MySQL integration tests
         working-directory: backend
-        run: ./mvnw -B -ntp -Dtest=StabilizationMapperIntegrationTest,TemplateVersionSchemaMigrationIntegrationTest test
+        run: ./mvnw -B -ntp -Dtest=StabilizationMapperIntegrationTest,TemplateVersionSchemaMigrationIntegrationTest,TemplateServiceConcurrencyIntegrationTest test
 
       - name: Upload Surefire reports
         if: always()
