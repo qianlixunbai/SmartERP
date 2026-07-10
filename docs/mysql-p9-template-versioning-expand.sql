@@ -126,21 +126,22 @@ ALTER TABLE audit_log
 -- ============================================================
 
 -- leave_request.template_id 在 mysql-p1-upgrade.sql 中已存在，
--- 但没有独立索引。添加 idx_leave_template 以加速按模板查询。
--- 使用 IF NOT EXISTS 逻辑：MySQL 不支持 CREATE INDEX IF NOT EXISTS，
--- 改用存储过程检查后安全添加。
+-- 其外键会自动创建一个以 template_id 为首列的可用索引，索引名称不固定。
+-- 仅在不存在任何此类前导索引时创建 idx_leave_template，避免冗余索引。
+-- MySQL 不支持 CREATE INDEX IF NOT EXISTS，因此通过 INFORMATION_SCHEMA 安全检查。
 
 -- 检查并添加 idx_leave_template
 SET @sql_idx_leave_template = (
     SELECT IF(
-        COUNT(*) = 0,
+        COUNT(DISTINCT INDEX_NAME) = 0,
         'ALTER TABLE leave_request ADD INDEX idx_leave_template (template_id)',
-        'SELECT ''idx_leave_template 已存在，跳过'' AS msg'
+        'SELECT ''leave_request.template_id 已有可用索引，跳过'' AS msg'
     )
     FROM INFORMATION_SCHEMA.STATISTICS
     WHERE TABLE_SCHEMA = DATABASE()
       AND TABLE_NAME = 'leave_request'
-      AND INDEX_NAME = 'idx_leave_template'
+      AND COLUMN_NAME = 'template_id'
+      AND SEQ_IN_INDEX = 1
 );
 
 PREPARE stmt FROM @sql_idx_leave_template;
@@ -168,7 +169,7 @@ SELECT '  INDEX idx_supersedes (supersedes_id)' AS '';
 SELECT '' AS '';
 SELECT '新增列（expense_request）：template_id + idx_expense_template' AS '';
 SELECT '新增列（audit_log）：node_id + idx_audit_node' AS '';
-SELECT '新增索引（leave_request）：idx_leave_template' AS '';
+SELECT '确保 leave_request.template_id 存在可用索引' AS '';
 SELECT '' AS '';
 SELECT '后续步骤（尚未执行）：' AS '';
 SELECT '  5B — backfill template_key/version_no/lifecycle_status' AS '';

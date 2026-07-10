@@ -14,11 +14,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -35,9 +38,12 @@ import static org.junit.jupiter.api.Assertions.*;
 class TemplateVersionSchemaMigrationIntegrationTest {
 
     static final String MYSQL_IMAGE = "mysql:8.0.40";
+    static final String LEAVE_REQUEST_TABLE = "leave_request";
+    static final String TEMPLATE_ID_COLUMN = "template_id";
 
     static MySQLContainer<?> mysql;
     static Connection connection;
+    static Set<String> preMigrationLeaveTemplateIndexes;
 
     @BeforeAll
     static void startContainer() throws Exception {
@@ -61,6 +67,11 @@ class TemplateVersionSchemaMigrationIntegrationTest {
                 mysql.getUsername(),
                 mysql.getPassword()
         );
+
+        preMigrationLeaveTemplateIndexes = leadingIndexesForColumn(
+                LEAVE_REQUEST_TABLE, TEMPLATE_ID_COLUMN);
+        assertFalse(preMigrationLeaveTemplateIndexes.isEmpty(),
+                "pre-migration leave_request.template_id must have an FK-backed leading index");
 
         // Execute the real migration script ONCE before all tests
         executeSqlFile(resolvePath("docs/mysql-p9-template-versioning-expand.sql"));
@@ -229,6 +240,42 @@ class TemplateVersionSchemaMigrationIntegrationTest {
                      + " AND INDEX_NAME = '" + indexName + "'")) {
             rs.next();
             return rs.getInt(1) > 0;
+        }
+    }
+
+    static Set<String> leadingIndexesForColumn(String table, String column) throws SQLException {
+        String sql = "SELECT DISTINCT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS"
+                + " WHERE TABLE_SCHEMA = DATABASE()"
+                + " AND TABLE_NAME = ?"
+                + " AND COLUMN_NAME = ?"
+                + " AND SEQ_IN_INDEX = 1"
+                + " ORDER BY INDEX_NAME";
+        Set<String> indexes = new LinkedHashSet<>();
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, table);
+            statement.setString(2, column);
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    indexes.add(rs.getString("INDEX_NAME"));
+                }
+            }
+        }
+        return Set.copyOf(indexes);
+    }
+
+    boolean foreignKeyExists(String table, String column) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE"
+                + " WHERE TABLE_SCHEMA = DATABASE()"
+                + " AND TABLE_NAME = ?"
+                + " AND COLUMN_NAME = ?"
+                + " AND REFERENCED_TABLE_NAME IS NOT NULL";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, table);
+            statement.setString(2, column);
+            try (ResultSet rs = statement.executeQuery()) {
+                rs.next();
+                return rs.getInt(1) > 0;
+            }
         }
     }
 
@@ -712,9 +759,21 @@ class TemplateVersionSchemaMigrationIntegrationTest {
         }
 
         @Test
-        @DisplayName("leave_request idx_leave_template 存在")
-        void leaveTemplateIndexExists() throws Exception {
-            assertTrue(indexExists("leave_request", "idx_leave_template"));
+        @DisplayName("leave_request 保留迁移前已有的 template_id 前导索引，不新增冗余索引")
+        void leaveTemplateIndexRemainsEquivalentWithoutRedundantIndex() throws Exception {
+            Set<String> postMigrationIndexes = leadingIndexesForColumn(
+                    LEAVE_REQUEST_TABLE, TEMPLATE_ID_COLUMN);
+
+            assertFalse(preMigrationLeaveTemplateIndexes.isEmpty(),
+                    "pre-migration template_id leading index must exist");
+            assertFalse(postMigrationIndexes.isEmpty(),
+                    "post-migration template_id leading index must exist");
+            assertEquals(preMigrationLeaveTemplateIndexes, postMigrationIndexes,
+                    "migration must retain the existing equivalent index set");
+            assertFalse(postMigrationIndexes.contains("idx_leave_template"),
+                    "migration must not add redundant idx_leave_template");
+            assertTrue(foreignKeyExists(LEAVE_REQUEST_TABLE, TEMPLATE_ID_COLUMN),
+                    "pre-existing leave_request.template_id foreign key must remain");
         }
     }
 
