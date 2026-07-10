@@ -55,9 +55,9 @@ class TemplateVersionSchemaMigrationIntegrationTest {
 
         mysql.start();
 
-        // JDBC connection
+        // JDBC connection with UTF-8 encoding for Chinese characters in fixtures
         connection = DriverManager.getConnection(
-                mysql.getJdbcUrl(),
+                mysql.getJdbcUrl() + "?characterEncoding=utf-8&useUnicode=true",
                 mysql.getUsername(),
                 mysql.getPassword()
         );
@@ -517,7 +517,8 @@ class TemplateVersionSchemaMigrationIntegrationTest {
         void differentKeyEachHasActive() throws Exception {
             try (Statement stmt = connection.createStatement()) {
                 stmt.execute("UPDATE approval_template SET template_key = 'CA', version_no = 1 WHERE id = 1");
-                stmt.execute("UPDATE approval_template SET template_key = 'CB', version_no = 1 WHERE id = 2");
+                // Use version_no=2 for 'CB' row 2, then insert a fresh row with version_no=1
+                stmt.execute("UPDATE approval_template SET template_key = 'CB', version_no = 2 WHERE id = 2");
                 stmt.execute("UPDATE approval_template SET lifecycle_status = 'ACTIVE' WHERE id = 1");
                 stmt.execute("UPDATE approval_template SET lifecycle_status = 'RETIRED' WHERE id = 2");
             }
