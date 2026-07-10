@@ -71,7 +71,8 @@ class TemplateServiceConcurrencyIntegrationTest {
     static final MySQLContainer<?> MYSQL = new MySQLContainer<>("mysql:8.0.40")
             .withDatabaseName("smarterp_concurrency_test")
             .withUsername("test")
-            .withPassword("test");
+            .withPassword("test")
+            .withCommand("--log_bin_trust_function_creators=1");
 
     @DynamicPropertySource
     static void registerDatasource(DynamicPropertyRegistry registry) {
